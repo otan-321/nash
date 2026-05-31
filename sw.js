@@ -1,5 +1,5 @@
 // Nash PWA Service Worker v1.0
-const CACHE_NAME = 'nash-v2';
+const CACHE_NAME = 'nash-v3';
 const ASSETS = [
   './',
   './index.html',
