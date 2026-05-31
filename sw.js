@@ -2,7 +2,7 @@
 // Handles offline caching and background sync
 
 const CACHE_NAME = 'nash-v1.0.1';
-const STATIC_CACHE = 'nash-static-v1.0.0';
+const STATIC_CACHE = 'nash-static-v1.0.1';
 
 // Assets to pre-cache on install
 const PRECACHE_ASSETS = [
