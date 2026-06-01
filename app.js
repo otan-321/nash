@@ -82,7 +82,7 @@ function selectBank(key) {
 // ── STATE ──────────────────────────────────────────────────────────────────
 const STATE_KEY = 'nash_state';
 let state = {
-  username: 'Nash',
+  username: 'Nasha',
   accounts: [
     { id: 'cash', name: 'Cash', icon: '💵', type: 'Debit', currency: 'PHP', balance: 4000 },
     { id: 'gcash', name: 'GCash', icon: '📱', type: 'Debit', currency: 'PHP', balance: 1000 }
@@ -146,6 +146,11 @@ function goTo(page) {
 
 // ── HOME ───────────────────────────────────────────────────────────────────
 function renderHome() {
+  // Initialize rabbit SVG if empty
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (wrap && !wrap.querySelector('svg')) {
+    wrap.innerHTML = RABBIT_EXPRESSIONS.happy || '';
+  }
   const now = new Date();
   const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
   const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
@@ -154,15 +159,7 @@ function renderHome() {
   document.getElementById('home-greeting-word').textContent = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
   document.getElementById('home-username').textContent = state.username;
 
-  const streak = calcStreak();
-  document.getElementById('streak-count').textContent = streak;
-  document.getElementById('streak-label').textContent = `${streak}-day no-spend streak`;
-  const msgs = [
-    `No-spend streak: <strong>${streak} days</strong>. Keep it up, every peso counts!`,
-    `${streak} days strong! Every peso saved is a peso earned 💪`,
-    `You're on a roll! <strong>${streak} days</strong> without unnecessary spending.`
-  ];
-  document.getElementById('mascot-message').innerHTML = msgs[streak % msgs.length];
+  updateMascotForStreak();
 
   const mon = now.getMonth(), yr = now.getFullYear();
   let income = 0, expense = 0;
@@ -573,6 +570,7 @@ function submitTransaction() {
     saveState(); closeAddSheet();
     showToast(`⇄ Transfer of ${fmt(amount)} done`);
     renderHome(); renderWallet();
+    showMascotReaction('transfer');
     return;
   }
 
@@ -608,11 +606,19 @@ function submitTransaction() {
   showToast(`${emoji} ${sign}${fmt(amount)} logged!`);
   renderHome();
 
-  // budget warning after expense
-  if (state.currentTxType === 'expense') {
+  // Mascot reaction
+  if (state.currentTxType === 'income') {
+    showMascotReaction('income');
+  } else if (state.currentTxType === 'expense') {
     const alerts = getBudgetAlerts();
     if (alerts.length > 0) {
+      const isExceeded = alerts[0].includes('exceeded');
+      setTimeout(() => showMascotReaction(isExceeded ? 'budgetExceeded' : 'budgetWarn'), 300);
       setTimeout(() => showToast('⚠️ ' + alerts[0]), 2700);
+    } else {
+      // Big expense = more than 20% of any account balance
+      const bigThreshold = account.balance * 0.2;
+      showMascotReaction(amount > bigThreshold ? 'expenseBig' : 'expense');
     }
   }
 }
@@ -930,6 +936,380 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// ── RABBIT MASCOT SYSTEM ───────────────────────────────────────────────────
+
+// 9 rabbit SVG expressions matching the reference image
+const RABBIT_EXPRESSIONS = {
+  happy: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="bodyG" cx="50%" cy="60%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#f0e8f0"/></radialGradient>
+      <radialGradient id="earInG" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffb8c8"/><stop offset="100%" stop-color="#ff8fa8"/></radialGradient>
+    </defs>
+    <!-- Ears -->
+    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="38" cy="30" rx="7" ry="20" fill="url(#earInG)" opacity="0.85"/>
+    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="82" cy="30" rx="7" ry="20" fill="url(#earInG)" opacity="0.85"/>
+    <!-- Body -->
+    <ellipse cx="60" cy="100" rx="38" ry="34" fill="url(#bodyG)"/>
+    <!-- Head -->
+    <circle cx="60" cy="65" r="30" fill="url(#bodyG)"/>
+    <!-- Cheek blush -->
+    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.5"/>
+    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.5"/>
+    <!-- Eyes happy -->
+    <path d="M49 60 Q52 56 55 60" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M65 60 Q68 56 71 60" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Nose -->
+    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
+    <!-- Mouth happy -->
+    <path d="M55 72 Q60 77 65 72" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <!-- Coin -->
+    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
+    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
+    <!-- Paws holding coin -->
+    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <!-- Exclamation sparkle -->
+    <text x="90" y="50" font-size="16" fill="#f9c74f">!</text>
+  </svg>`,
+
+  excited: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="bodyG2" cx="50%" cy="60%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#f0e8f0"/></radialGradient>
+    </defs>
+    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="60" cy="100" rx="38" ry="34" fill="url(#bodyG2)"/>
+    <circle cx="60" cy="65" r="30" fill="url(#bodyG2)"/>
+    <ellipse cx="43" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.55"/>
+    <ellipse cx="77" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.55"/>
+    <!-- Eyes very happy arcs -->
+    <path d="M47 61 Q52 55 57 61" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M63 61 Q68 55 73 61" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
+    <path d="M54 72 Q60 79 66 72" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
+    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
+    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <!-- Sparkles -->
+    <text x="88" y="42" font-size="12" fill="#f9c74f">✦</text>
+    <text x="20" y="48" font-size="10" fill="#f9c74f">✦</text>
+    <text x="92" y="60" font-size="8" fill="#f9c74f">✦</text>
+  </svg>`,
+
+  thinking: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
+    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
+    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.4"/>
+    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.4"/>
+    <!-- Neutral thinking eyes -->
+    <ellipse cx="52" cy="62" rx="5" ry="5" fill="#333"/>
+    <ellipse cx="68" cy="62" rx="5" ry="5" fill="#333"/>
+    <ellipse cx="54" cy="61" rx="2" ry="2" fill="white"/>
+    <ellipse cx="70" cy="61" rx="2" ry="2" fill="white"/>
+    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
+    <!-- Flat mouth -->
+    <path d="M55 74 Q60 74 65 74" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <!-- Paw on chin -->
+    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <ellipse cx="75" cy="108" rx="9" ry="7" fill="#f0e8f0"/>
+    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
+    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
+    <!-- Thought cloud -->
+    <circle cx="88" cy="35" r="9" fill="white" opacity="0.9"/>
+    <circle cx="98" cy="30" r="7" fill="white" opacity="0.9"/>
+    <circle cx="93" cy="23" r="6" fill="white" opacity="0.9"/>
+    <circle cx="82" cy="29" r="5" fill="white" opacity="0.9"/>
+  </svg>`,
+
+  surprised: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="38" cy="30" rx="14" ry="30" fill="#f0e8f0"/>
+    <ellipse cx="38" cy="30" rx="7" ry="22" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="82" cy="30" rx="14" ry="30" fill="#f0e8f0"/>
+    <ellipse cx="82" cy="30" rx="7" ry="22" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="60" cy="100" rx="40" ry="36" fill="#f0e8f0"/>
+    <circle cx="60" cy="65" r="32" fill="#f0e8f0"/>
+    <ellipse cx="43" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.5"/>
+    <ellipse cx="77" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.5"/>
+    <!-- Wide surprised eyes -->
+    <ellipse cx="51" cy="61" rx="7" ry="7" fill="#333"/>
+    <ellipse cx="69" cy="61" rx="7" ry="7" fill="#333"/>
+    <ellipse cx="53" cy="59" rx="2.5" ry="2.5" fill="white"/>
+    <ellipse cx="71" cy="59" rx="2.5" ry="2.5" fill="white"/>
+    <ellipse cx="60" cy="70" rx="4" ry="2.5" fill="#ffb8c8"/>
+    <!-- Open mouth O -->
+    <ellipse cx="60" cy="76" rx="5" ry="4" fill="#cc6688"/>
+    <!-- Paw over mouth -->
+    <ellipse cx="60" cy="80" rx="11" ry="7" fill="#f0e8f0"/>
+    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
+    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
+    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <text x="87" y="48" font-size="18" fill="#e05555">!</text>
+  </svg>`,
+
+  determined: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
+    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
+    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.45"/>
+    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.45"/>
+    <!-- Determined furrowed eyes -->
+    <path d="M46 57 L58 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M62 60 L74 57" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="52" cy="62" rx="4.5" ry="4.5" fill="#333"/>
+    <ellipse cx="68" cy="62" rx="4.5" ry="4.5" fill="#333"/>
+    <ellipse cx="53" cy="61" rx="1.5" ry="1.5" fill="white"/>
+    <ellipse cx="69" cy="61" rx="1.5" ry="1.5" fill="white"/>
+    <ellipse cx="60" cy="69" rx="4" ry="2.5" fill="#ffb8c8"/>
+    <!-- Tight mouth -->
+    <path d="M55 74 Q60 72 65 74" stroke="#888" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
+    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
+    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <!-- Energy lines -->
+    <path d="M87 65 L93 62" stroke="#f9c74f" stroke-width="2" stroke-linecap="round"/>
+    <path d="M89 70 L96 70" stroke="#f9c74f" stroke-width="2" stroke-linecap="round"/>
+    <path d="M87 75 L93 78" stroke="#f9c74f" stroke-width="2" stroke-linecap="round"/>
+  </svg>`,
+
+  proud: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
+    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
+    <ellipse cx="43" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.55"/>
+    <ellipse cx="77" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.55"/>
+    <!-- Proud happy eyes -->
+    <path d="M47 62 Q52 57 57 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M63 62 Q68 57 73 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
+    <path d="M53 73 Q60 80 67 73" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <!-- Thumbs up paw -->
+    <ellipse cx="80" cy="108" rx="9" ry="8" fill="#f0e8f0"/>
+    <rect x="77" y="97" width="6" height="9" rx="3" fill="#f0e8f0"/>
+    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
+    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
+    <text x="87" y="46" font-size="12" fill="#f9c74f">✦</text>
+  </svg>`,
+
+  happyhug: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="38" cy="25" rx="12" ry="26" fill="#f0e8f0"/>
+    <ellipse cx="38" cy="25" rx="6.5" ry="18" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="82" cy="25" rx="12" ry="26" fill="#f0e8f0"/>
+    <ellipse cx="82" cy="25" rx="6.5" ry="18" fill="#ffb8c8" opacity="0.85"/>
+    <!-- Hugging body -->
+    <ellipse cx="60" cy="100" rx="42" ry="36" fill="#f0e8f0"/>
+    <circle cx="60" cy="63" r="30" fill="#f0e8f0"/>
+    <ellipse cx="43" cy="70" rx="8" ry="5" fill="#ffb8c8" opacity="0.6"/>
+    <ellipse cx="77" cy="70" rx="8" ry="5" fill="#ffb8c8" opacity="0.6"/>
+    <!-- Blissful closed eyes -->
+    <path d="M47 62 Q52 58 57 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M63 62 Q68 58 73 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
+    <path d="M53 73 Q60 80 67 73" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <!-- Big pink coin being hugged -->
+    <circle cx="60" cy="118" r="16" fill="#ffb8c8" stroke="#e8699a" stroke-width="2"/>
+    <text x="60" y="124" text-anchor="middle" fill="#aa3366" font-size="14" font-weight="bold">$</text>
+    <!-- Arms wrapped around -->
+    <path d="M25 108 Q35 95 60 100 Q85 95 95 108" stroke="#f0e8f0" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <!-- Heart -->
+    <text x="83" y="52" font-size="16" fill="#e07898">♥</text>
+  </svg>`,
+
+  winking: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
+    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
+    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.5"/>
+    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.5"/>
+    <!-- One wink eye, one open -->
+    <ellipse cx="52" cy="62" rx="5" ry="5" fill="#333"/>
+    <ellipse cx="54" cy="61" rx="2" ry="2" fill="white"/>
+    <path d="M64 62 Q68 58 72 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
+    <path d="M54 73 Q60 78 66 73" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
+    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
+    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <!-- Star -->
+    <text x="88" y="48" font-size="14" fill="#f9c74f">★</text>
+  </svg>`,
+
+  worried: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
+    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
+    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
+    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
+    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.4"/>
+    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.4"/>
+    <!-- Worried brow + eyes -->
+    <path d="M46 56 L54 59" stroke="#555" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M66 59 L74 56" stroke="#555" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="52" cy="63" rx="4.5" ry="4.5" fill="#333"/>
+    <ellipse cx="68" cy="63" rx="4.5" ry="4.5" fill="#333"/>
+    <ellipse cx="53" cy="62" rx="1.5" ry="1.5" fill="white"/>
+    <ellipse cx="69" cy="62" rx="1.5" ry="1.5" fill="white"/>
+    <ellipse cx="60" cy="69" rx="4" ry="2.5" fill="#ffb8c8"/>
+    <!-- Worried mouth -->
+    <path d="M53 76 Q60 72 67 76" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
+    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
+    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
+    <!-- Sweat/stress spiral -->
+    <path d="M85 42 Q90 38 88 44 Q86 50 92 48" stroke="#aaddff" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`
+};
+
+// Tips for the home page - cycling with different expressions
+const NASHA_TIPS = [
+  { expr: 'happy',      msg: "Great to see you, <strong>Nasha</strong>! Log every peso — awareness is the first step 🐰" },
+  { expr: 'excited',    msg: "Every peso tracked is a peso <strong>understood</strong>. You're doing amazing! ✨" },
+  { expr: 'winking',    msg: "Did you know? Small daily savings add up to <strong>big goals</strong>. Keep it up! 😉" },
+  { expr: 'thinking',   msg: "Hmm... Have you set your <strong>budget limits</strong> for this month yet? 💭" },
+  { expr: 'proud',      msg: "Your savings rate is <strong>improving</strong>. I'm so proud of you, Nasha! 🌟" },
+  { expr: 'determined', msg: "No-spend days are <strong>wins</strong>! Every streak counts. Stay strong! 💪" },
+  { expr: 'happyhug',   msg: "Budget discipline: <strong>level up!</strong> Keep logging everything, Nasha! 🎉" },
+];
+
+const NASHA_REACTIONS = {
+  income:          { expr: 'excited',    msg: "Yay! Income logged! Every peso in brings you closer to your goals 💚" },
+  expense:         { expr: 'thinking',   msg: "Expense noted. Stay mindful of your budget, Nasha! 💭" },
+  expenseBig:      { expr: 'worried',    msg: "That's a big one! Make sure it fits your monthly budget ⚠️" },
+  budgetWarn:      { expr: 'worried',    msg: "Heads up! You're getting close to your budget limit. Careful now! 😟" },
+  budgetExceeded:  { expr: 'surprised',  msg: "Oops! Budget exceeded! Time to pause spending in this category 😮" },
+  transfer:        { expr: 'winking',    msg: "Transfer done! Smart money management, Nasha 😉" },
+  goalReached:     { expr: 'happyhug',   msg: "🎉 GOAL REACHED! You did it, Nasha! I'm so proud! 🐰💕" },
+  streak:          { expr: 'proud',      msg: "No-spend streak! You're on fire, Nasha! Keep it going! 🔥" },
+  tap:             { expr: 'happy',      msg: "Hi Nasha! I'm here to help you track every peso! 🐰" },
+};
+
+let mascotTipIndex = 0;
+let mascotAnimTimer = null;
+
+function setMascotExpression(expr, animate = true) {
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (!wrap) return;
+  const svg = RABBIT_EXPRESSIONS[expr] || RABBIT_EXPRESSIONS.happy;
+  if (animate) {
+    wrap.style.transition = 'transform 0.15s ease, opacity 0.15s ease';
+    wrap.style.transform = 'scale(0.85)';
+    wrap.style.opacity = '0.5';
+    setTimeout(() => {
+      wrap.innerHTML = svg;
+      wrap.style.transform = 'scale(1)';
+      wrap.style.opacity = '1';
+    }, 150);
+  } else {
+    wrap.innerHTML = svg;
+  }
+}
+
+function setMascotMessage(msg, animate = true) {
+  const el = document.getElementById('mascot-message');
+  if (!el) return;
+  if (animate) {
+    el.style.transition = 'opacity 0.2s';
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.innerHTML = msg;
+      el.style.opacity = '1';
+    }, 200);
+  } else {
+    el.innerHTML = msg;
+  }
+}
+
+function showMascotReaction(key) {
+  const reaction = NASHA_REACTIONS[key];
+  if (!reaction) return;
+  setMascotExpression(reaction.expr);
+  setMascotMessage(reaction.msg);
+  // Auto-return to home tip after 4 seconds
+  clearTimeout(mascotAnimTimer);
+  mascotAnimTimer = setTimeout(() => { updateMascotForStreak(); }, 4000);
+}
+
+function updateMascotForStreak() {
+  const streak = calcStreak();
+  let expr, msg;
+  if (streak === 0) {
+    expr = 'thinking'; msg = `Start your no-spend streak today, <strong>Nasha</strong>! 💭`;
+  } else if (streak >= 7) {
+    expr = 'happyhug'; msg = `<strong>${streak}-day streak!</strong> Incredible, Nasha! You're unstoppable! 🎉`;
+  } else if (streak >= 3) {
+    expr = 'proud'; msg = `<strong>${streak} days</strong> no-spend! You're on a roll, Nasha! 🔥`;
+  } else {
+    expr = 'happy'; msg = `<strong>${streak}-day</strong> no-spend streak! Keep it going! 🐰`;
+  }
+  setMascotExpression(expr);
+  setMascotMessage(msg);
+  document.getElementById('streak-count').textContent = streak;
+  document.getElementById('streak-label').textContent = `${streak}-day no-spend streak`;
+}
+
+function cycleMascotTip() {
+  const tip = NASHA_TIPS[mascotTipIndex % NASHA_TIPS.length];
+  mascotTipIndex++;
+  setMascotExpression(tip.expr);
+  setMascotMessage(tip.msg);
+}
+
+
+// ── MASCOT TAP ─────────────────────────────────────────────────────────────
+let tapCount = 0;
+const tapMessages = [
+  { expr: 'happy',      msg: "Hi <strong>Nasha</strong>! I'm here to cheer you on! 🐰" },
+  { expr: 'winking',    msg: "Psst! Every peso logged = a peso <strong>understood</strong>! 😉" },
+  { expr: 'excited',    msg: "You're doing <strong>amazing</strong>, Nasha! Keep it up! ✨" },
+  { expr: 'proud',      msg: "I believe in you! You <strong>got this</strong>! 🌟" },
+  { expr: 'happyhug',   msg: "Big hugs, <strong>Nasha</strong>! Your future self thanks you! 💕" },
+  { expr: 'determined', msg: "Financial freedom is a <strong>journey</strong>. One peso at a time! 💪" },
+  { expr: 'thinking',   msg: "Thinking... Maybe check your <strong>budget</strong> today? 🤔" },
+];
+function handleMascotTap() {
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (wrap) {
+    wrap.classList.remove('mascot-bounce');
+    void wrap.offsetWidth;
+    wrap.classList.add('mascot-bounce');
+    setTimeout(() => wrap.classList.remove('mascot-bounce'), 500);
+  }
+  const msg = tapMessages[tapCount % tapMessages.length];
+  tapCount++;
+  setMascotExpression(msg.expr);
+  setMascotMessage(msg.msg);
+  clearTimeout(mascotAnimTimer);
+  mascotAnimTimer = setTimeout(() => updateMascotForStreak(), 4000);
+}
+
 // ── INIT ───────────────────────────────────────────────────────────────────
 loadState();
 renderHome();
+// Cycle tips every 8s on home
+setInterval(() => {
+  if (document.getElementById('page-home').classList.contains('active')) {
+    cycleMascotTip();
+  }
+}, 8000);
