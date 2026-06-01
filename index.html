@@ -218,15 +218,75 @@
     .bank-tile.selected span { color: var(--green-bright); }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    #mascot-svg-wrap { transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s; animation: mascotFloat 3s ease-in-out infinite; }
-    @keyframes mascotFloat { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-    #mascot-svg-wrap:active { transform: scale(0.9); }
+    /* Mascot wrap: floating idle + smooth expression transitions */
+    #mascot-svg-wrap {
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), opacity 0.12s;
+      animation: mascotFloat 3s ease-in-out infinite;
+      position: relative;
+    }
+    @keyframes mascotFloat { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+    #mascot-svg-wrap:active { transform: scale(0.91) !important; }
     .mascot-bubble { transition: all 0.3s ease; }
-    .mascot-text { transition: opacity 0.2s; }
-    .mascot-bounce { animation: mascotBounce 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-    @keyframes mascotBounce { 0% { transform: scale(1); } 40% { transform: scale(1.2) rotate(-5deg); } 70% { transform: scale(0.95) rotate(3deg); } 100% { transform: scale(1) rotate(0); } }
-    .mascot-spin { animation: mascotSpin 0.5s ease-out; }
-    @keyframes mascotSpin { 0% { transform: rotate(0deg) scale(0.8); } 60% { transform: rotate(20deg) scale(1.1); } 100% { transform: rotate(0deg) scale(1); } }
+    .mascot-text { transition: opacity 0.18s; }
+
+    /* Bounce: quick pop on tap */
+    .mascot-bounce { animation: mascotBounce 0.42s cubic-bezier(0.34,1.56,0.64,1) !important; }
+    @keyframes mascotBounce {
+      0%   { transform: scale(1) translateY(0); }
+      35%  { transform: scale(1.22) translateY(-8px) rotate(-4deg); }
+      65%  { transform: scale(0.93) translateY(2px) rotate(3deg); }
+      100% { transform: scale(1) translateY(0) rotate(0); }
+    }
+
+    /* Hop: up-down repeated for income/savings */
+    .mascot-hop { animation: mascotHop 0.5s ease-in-out 2; }
+    @keyframes mascotHop {
+      0%,100% { transform: translateY(0); }
+      40%     { transform: translateY(-14px) scale(1.05); }
+      70%     { transform: translateY(2px) scale(0.97); }
+    }
+
+    /* Dance: side-to-side for big achievements */
+    .mascot-dance { animation: mascotDance 0.4s ease-in-out 4; }
+    @keyframes mascotDance {
+      0%,100% { transform: translateY(0) rotate(0); }
+      25%     { transform: translateY(-10px) rotate(-8deg) scale(1.08); }
+      75%     { transform: translateY(-10px) rotate(8deg) scale(1.08); }
+    }
+
+    /* Sleeping: gentle slow pulse */
+    .mascot-sleeping { animation: mascotSleep 2.5s ease-in-out infinite !important; }
+    @keyframes mascotSleep {
+      0%,100% { transform: translateY(0) rotate(0deg); }
+      50%     { transform: translateY(3px) rotate(2deg); }
+    }
+
+    /* Particles container */
+    #mascot-particles {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; overflow: visible;
+      z-index: 10;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110px) rotate(360deg); opacity: 0; }
+    }
+    @keyframes coinFall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100px) rotate(-180deg); opacity: 0; }
+    }
+    @keyframes sparklePop {
+      0%   { transform: scale(0) rotate(0deg); opacity: 0; }
+      50%  { transform: scale(1.4) rotate(20deg); opacity: 1; }
+      100% { transform: scale(0) rotate(40deg); opacity: 0; }
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0) scale(0.8); opacity: 0; }
+      30%  { opacity: 1; }
+      100% { transform: translateY(-50px) scale(1.2); opacity: 0; }
+    }
+
     .page.active .scroll-area > * { animation: fadeIn 0.25s ease both; }
   </style>
 </head>
@@ -250,8 +310,14 @@
       <div class="home-greeting" id="home-date">MONDAY, JUNE 1</div>
       <div class="home-name">Good <span id="home-greeting-word">morning</span>, <strong id="home-username">Nasha</strong>!</div>
       <div class="home-mascot-row">
-        <div style="width:88px;height:104px;flex-shrink:0;cursor:pointer;filter:drop-shadow(0 4px 12px rgba(245,160,188,0.25))" id="mascot-svg-wrap" onclick="handleMascotTap()" title="Tap me!">
-</div>
+        <div style="width:96px;height:116px;flex-shrink:0;cursor:pointer;filter:drop-shadow(0 4px 16px rgba(245,160,188,0.3));position:relative" title="Tap me!">
+          <div id="mascot-svg-wrap" onclick="handleMascotTap()" style="width:100%;height:100%;position:relative">
+          </div>
+          <!-- Invisible tap zones for ears and coin -->
+          <div onclick="event.stopPropagation();handleEarTap()" style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:60px;height:40px;cursor:pointer" title="Wiggle ears!"></div>
+          <div onclick="event.stopPropagation();handleCoinTap()" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:32px;height:32px;cursor:pointer;border-radius:50%" title="Check savings!"></div>
+          <div id="mascot-particles" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:10"></div>
+        </div>
         <div class="mascot-bubble">
           <div class="mascot-name">Nasha 🐰</div>
           <div class="mascot-text" id="mascot-message">Hi <strong>Nasha</strong>! Ready to track your finances? 🐰</div>

@@ -937,379 +937,675 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ── RABBIT MASCOT SYSTEM ───────────────────────────────────────────────────
 
-// 9 rabbit SVG expressions matching the reference image
-const RABBIT_EXPRESSIONS = {
-  happy: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="bodyG" cx="50%" cy="60%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#f0e8f0"/></radialGradient>
-      <radialGradient id="earInG" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffb8c8"/><stop offset="100%" stop-color="#ff8fa8"/></radialGradient>
-    </defs>
-    <!-- Ears -->
-    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="38" cy="30" rx="7" ry="20" fill="url(#earInG)" opacity="0.85"/>
-    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="82" cy="30" rx="7" ry="20" fill="url(#earInG)" opacity="0.85"/>
-    <!-- Body -->
-    <ellipse cx="60" cy="100" rx="38" ry="34" fill="url(#bodyG)"/>
-    <!-- Head -->
-    <circle cx="60" cy="65" r="30" fill="url(#bodyG)"/>
-    <!-- Cheek blush -->
-    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.5"/>
-    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.5"/>
-    <!-- Eyes happy -->
-    <path d="M49 60 Q52 56 55 60" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M65 60 Q68 56 71 60" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <!-- Nose -->
-    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
-    <!-- Mouth happy -->
-    <path d="M55 72 Q60 77 65 72" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <!-- Coin -->
-    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
-    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
-    <!-- Paws holding coin -->
-    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <!-- Exclamation sparkle -->
-    <text x="90" y="50" font-size="16" fill="#f9c74f">!</text>
-  </svg>`,
+// ── RABBIT MASCOT SYSTEM v2 ────────────────────────────────────────────────
+// Full alive rabbit with: idle animations, blink, ear wiggle, sleep,
+// achievements, streaks, coin rain, confetti, petting, accessories
 
-  excited: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="bodyG2" cx="50%" cy="60%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#f0e8f0"/></radialGradient>
-    </defs>
-    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="60" cy="100" rx="38" ry="34" fill="url(#bodyG2)"/>
-    <circle cx="60" cy="65" r="30" fill="url(#bodyG2)"/>
-    <ellipse cx="43" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.55"/>
-    <ellipse cx="77" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.55"/>
-    <!-- Eyes very happy arcs -->
-    <path d="M47 61 Q52 55 57 61" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M63 61 Q68 55 73 61" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
-    <path d="M54 72 Q60 79 66 72" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
-    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
-    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <!-- Sparkles -->
-    <text x="88" y="42" font-size="12" fill="#f9c74f">✦</text>
-    <text x="20" y="48" font-size="10" fill="#f9c74f">✦</text>
-    <text x="92" y="60" font-size="8" fill="#f9c74f">✦</text>
-  </svg>`,
+// ── SVG RABBIT EXPRESSIONS ─────────────────────────────────────────────────
+function buildRabbit(opts = {}) {
+  const {
+    eyes = 'happy',     // happy | excited | thinking | worried | surprised | sleeping | winking | proud | heart | determined
+    mouth = 'smile',    // smile | open | flat | frown | smirk
+    blush = 0.5,
+    earTilt = 0,        // degrees tilt for ear wiggle
+    accessory = '',     // crown | glasses | bowtie | none
+    skinColor = '#f0e8f0',
+    earColor = '#ffb8c8',
+    coinColor = '#f9c74f',
+    coinGlow = false,
+    eyeOffset = 0,      // for look-around
+    sleeping = false,
+  } = opts;
 
-  thinking: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
-    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
-    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.4"/>
-    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.4"/>
-    <!-- Neutral thinking eyes -->
-    <ellipse cx="52" cy="62" rx="5" ry="5" fill="#333"/>
-    <ellipse cx="68" cy="62" rx="5" ry="5" fill="#333"/>
-    <ellipse cx="54" cy="61" rx="2" ry="2" fill="white"/>
-    <ellipse cx="70" cy="61" rx="2" ry="2" fill="white"/>
-    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
-    <!-- Flat mouth -->
-    <path d="M55 74 Q60 74 65 74" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <!-- Paw on chin -->
-    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <ellipse cx="75" cy="108" rx="9" ry="7" fill="#f0e8f0"/>
-    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
-    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
-    <!-- Thought cloud -->
-    <circle cx="88" cy="35" r="9" fill="white" opacity="0.9"/>
-    <circle cx="98" cy="30" r="7" fill="white" opacity="0.9"/>
-    <circle cx="93" cy="23" r="6" fill="white" opacity="0.9"/>
-    <circle cx="82" cy="29" r="5" fill="white" opacity="0.9"/>
-  </svg>`,
+  const eyeMap = {
+    happy:       `<path d="M47 61 Q52 56 57 61" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                  <path d="M63 61 Q68 56 73 61" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+    excited:     `<path d="M46 62 Q52 55 58 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                  <path d="M62 62 Q68 55 74 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+    thinking:    `<ellipse cx="${52+eyeOffset}" cy="62" rx="5" ry="5" fill="#333"/>
+                  <ellipse cx="${68+eyeOffset}" cy="62" rx="5" ry="5" fill="#333"/>
+                  <ellipse cx="${54+eyeOffset}" cy="61" rx="2" ry="2" fill="white"/>
+                  <ellipse cx="${70+eyeOffset}" cy="61" rx="2" ry="2" fill="white"/>`,
+    worried:     `<path d="M47 58 L54 61" stroke="#555" stroke-width="2" fill="none" stroke-linecap="round"/>
+                  <path d="M66 61 L73 58" stroke="#555" stroke-width="2" fill="none" stroke-linecap="round"/>
+                  <ellipse cx="52" cy="63" rx="4.5" ry="4.5" fill="#333"/>
+                  <ellipse cx="68" cy="63" rx="4.5" ry="4.5" fill="#333"/>
+                  <ellipse cx="53" cy="62" rx="1.5" ry="1.5" fill="white"/>
+                  <ellipse cx="69" cy="62" rx="1.5" ry="1.5" fill="white"/>`,
+    surprised:   `<ellipse cx="51" cy="61" rx="7" ry="7" fill="#333"/>
+                  <ellipse cx="69" cy="61" rx="7" ry="7" fill="#333"/>
+                  <ellipse cx="53" cy="59" rx="2.5" ry="2.5" fill="white"/>
+                  <ellipse cx="71" cy="59" rx="2.5" ry="2.5" fill="white"/>`,
+    sleeping:    `<path d="M47 62 Q52 67 57 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                  <path d="M63 62 Q68 67 73 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+    winking:     `<ellipse cx="52" cy="62" rx="5" ry="5" fill="#333"/>
+                  <ellipse cx="54" cy="61" rx="2" ry="2" fill="white"/>
+                  <path d="M64 62 Q68 58 72 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+    proud:       `<path d="M47 62 Q52 57 57 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                  <path d="M63 62 Q68 57 73 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+    heart:       `<text x="48" y="67" font-size="14" fill="#e07898">♥</text>
+                  <text x="64" y="67" font-size="14" fill="#e07898">♥</text>`,
+    determined:  `<path d="M46 57 L58 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+                  <path d="M62 60 L74 57" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+                  <ellipse cx="52" cy="62" rx="4.5" ry="4.5" fill="#333"/>
+                  <ellipse cx="68" cy="62" rx="4.5" ry="4.5" fill="#333"/>
+                  <ellipse cx="53" cy="61" rx="1.5" ry="1.5" fill="white"/>
+                  <ellipse cx="69" cy="61" rx="1.5" ry="1.5" fill="white"/>`,
+  };
 
-  surprised: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="38" cy="30" rx="14" ry="30" fill="#f0e8f0"/>
-    <ellipse cx="38" cy="30" rx="7" ry="22" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="82" cy="30" rx="14" ry="30" fill="#f0e8f0"/>
-    <ellipse cx="82" cy="30" rx="7" ry="22" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="60" cy="100" rx="40" ry="36" fill="#f0e8f0"/>
-    <circle cx="60" cy="65" r="32" fill="#f0e8f0"/>
-    <ellipse cx="43" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.5"/>
-    <ellipse cx="77" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.5"/>
-    <!-- Wide surprised eyes -->
-    <ellipse cx="51" cy="61" rx="7" ry="7" fill="#333"/>
-    <ellipse cx="69" cy="61" rx="7" ry="7" fill="#333"/>
-    <ellipse cx="53" cy="59" rx="2.5" ry="2.5" fill="white"/>
-    <ellipse cx="71" cy="59" rx="2.5" ry="2.5" fill="white"/>
-    <ellipse cx="60" cy="70" rx="4" ry="2.5" fill="#ffb8c8"/>
-    <!-- Open mouth O -->
-    <ellipse cx="60" cy="76" rx="5" ry="4" fill="#cc6688"/>
-    <!-- Paw over mouth -->
-    <ellipse cx="60" cy="80" rx="11" ry="7" fill="#f0e8f0"/>
-    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
-    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
-    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <text x="87" y="48" font-size="18" fill="#e05555">!</text>
-  </svg>`,
+  const mouthMap = {
+    smile:  `<path d="M54 73 Q60 79 66 73" stroke="#999" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+    open:   `<ellipse cx="60" cy="76" rx="5" ry="4" fill="#cc6688"/>`,
+    flat:   `<path d="M55 74 Q60 74 65 74" stroke="#999" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+    frown:  `<path d="M54 76 Q60 71 66 76" stroke="#999" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+    smirk:  `<path d="M55 73 Q60 78 66 74" stroke="#999" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+    grin:   `<path d="M53 73 Q60 81 67 73" stroke="#999" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  };
 
-  determined: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
-    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
-    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.45"/>
-    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.45"/>
-    <!-- Determined furrowed eyes -->
-    <path d="M46 57 L58 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M62 60 L74 57" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <ellipse cx="52" cy="62" rx="4.5" ry="4.5" fill="#333"/>
-    <ellipse cx="68" cy="62" rx="4.5" ry="4.5" fill="#333"/>
-    <ellipse cx="53" cy="61" rx="1.5" ry="1.5" fill="white"/>
-    <ellipse cx="69" cy="61" rx="1.5" ry="1.5" fill="white"/>
-    <ellipse cx="60" cy="69" rx="4" ry="2.5" fill="#ffb8c8"/>
-    <!-- Tight mouth -->
-    <path d="M55 74 Q60 72 65 74" stroke="#888" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
-    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
-    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <!-- Energy lines -->
-    <path d="M87 65 L93 62" stroke="#f9c74f" stroke-width="2" stroke-linecap="round"/>
-    <path d="M89 70 L96 70" stroke="#f9c74f" stroke-width="2" stroke-linecap="round"/>
-    <path d="M87 75 L93 78" stroke="#f9c74f" stroke-width="2" stroke-linecap="round"/>
-  </svg>`,
+  const accessoryMap = {
+    crown:   `<polygon points="60,30 54,42 60,38 66,42 72,30 69,46 51,46" fill="#f9c74f" stroke="#e8a500" stroke-width="1"/>
+              <circle cx="60" cy="32" r="3" fill="#e05555"/>
+              <circle cx="52" cy="40" r="2.5" fill="#4cc9f0"/>
+              <circle cx="68" cy="40" r="2.5" fill="#4cc9f0"/>`,
+    glasses: `<circle cx="52" cy="62" r="8" fill="none" stroke="#555" stroke-width="1.5"/>
+              <circle cx="68" cy="62" r="8" fill="none" stroke="#555" stroke-width="1.5"/>
+              <line x1="60" y1="62" x2="60" y2="62" stroke="#555" stroke-width="1.5"/>
+              <line x1="44" y1="62" x2="37" y2="60" stroke="#555" stroke-width="1.5"/>
+              <line x1="76" y1="62" x2="83" y2="60" stroke="#555" stroke-width="1.5"/>`,
+    bowtie:  `<path d="M48 86 L56 82 L48 78 Z" fill="#e05555"/>
+              <path d="M72 86 L64 82 L72 78 Z" fill="#e05555"/>
+              <circle cx="60" cy="82" r="4" fill="#cc3333"/>`,
+    none:    '',
+  };
 
-  proud: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
-    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
-    <ellipse cx="43" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.55"/>
-    <ellipse cx="77" cy="72" rx="8" ry="5" fill="#ffb8c8" opacity="0.55"/>
-    <!-- Proud happy eyes -->
-    <path d="M47 62 Q52 57 57 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M63 62 Q68 57 73 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
-    <path d="M53 73 Q60 80 67 73" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <!-- Thumbs up paw -->
-    <ellipse cx="80" cy="108" rx="9" ry="8" fill="#f0e8f0"/>
-    <rect x="77" y="97" width="6" height="9" rx="3" fill="#f0e8f0"/>
-    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
-    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
-    <text x="87" y="46" font-size="12" fill="#f9c74f">✦</text>
-  </svg>`,
+  const coinGlowEl = coinGlow
+    ? `<circle cx="60" cy="118" r="18" fill="${coinColor}" opacity="0.25"/>`
+    : '';
 
-  happyhug: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="38" cy="25" rx="12" ry="26" fill="#f0e8f0"/>
-    <ellipse cx="38" cy="25" rx="6.5" ry="18" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="82" cy="25" rx="12" ry="26" fill="#f0e8f0"/>
-    <ellipse cx="82" cy="25" rx="6.5" ry="18" fill="#ffb8c8" opacity="0.85"/>
-    <!-- Hugging body -->
-    <ellipse cx="60" cy="100" rx="42" ry="36" fill="#f0e8f0"/>
-    <circle cx="60" cy="63" r="30" fill="#f0e8f0"/>
-    <ellipse cx="43" cy="70" rx="8" ry="5" fill="#ffb8c8" opacity="0.6"/>
-    <ellipse cx="77" cy="70" rx="8" ry="5" fill="#ffb8c8" opacity="0.6"/>
-    <!-- Blissful closed eyes -->
-    <path d="M47 62 Q52 58 57 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M63 62 Q68 58 73 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
-    <path d="M53 73 Q60 80 67 73" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <!-- Big pink coin being hugged -->
-    <circle cx="60" cy="118" r="16" fill="#ffb8c8" stroke="#e8699a" stroke-width="2"/>
-    <text x="60" y="124" text-anchor="middle" fill="#aa3366" font-size="14" font-weight="bold">$</text>
-    <!-- Arms wrapped around -->
-    <path d="M25 108 Q35 95 60 100 Q85 95 95 108" stroke="#f0e8f0" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <!-- Heart -->
-    <text x="83" y="52" font-size="16" fill="#e07898">♥</text>
-  </svg>`,
+  const sleepZzz = sleeping
+    ? `<text x="82" y="50" font-size="11" fill="#aaddff" opacity="0.9">z</text>
+       <text x="88" y="42" font-size="13" fill="#aaddff" opacity="0.9">z</text>
+       <text x="96" y="32" font-size="16" fill="#aaddff">Z</text>`
+    : '';
 
-  winking: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
-    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
-    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.5"/>
-    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.5"/>
-    <!-- One wink eye, one open -->
-    <ellipse cx="52" cy="62" rx="5" ry="5" fill="#333"/>
-    <ellipse cx="54" cy="61" rx="2" ry="2" fill="white"/>
-    <path d="M64 62 Q68 58 72 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <ellipse cx="60" cy="68" rx="4" ry="2.5" fill="#ffb8c8"/>
-    <path d="M54 73 Q60 78 66 73" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
-    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
-    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <!-- Star -->
-    <text x="88" y="48" font-size="14" fill="#f9c74f">★</text>
-  </svg>`,
+  const earTransform = earTilt !== 0
+    ? `transform="rotate(${earTilt} 38 60)"` : '';
+  const ear2Transform = earTilt !== 0
+    ? `transform="rotate(${-earTilt} 82 60)"` : '';
 
-  worried: `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="38" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="38" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="82" cy="30" rx="13" ry="28" fill="#f0e8f0"/>
-    <ellipse cx="82" cy="30" rx="7" ry="20" fill="#ffb8c8" opacity="0.85"/>
-    <ellipse cx="60" cy="100" rx="38" ry="34" fill="#f0e8f0"/>
-    <circle cx="60" cy="65" r="30" fill="#f0e8f0"/>
-    <ellipse cx="43" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.4"/>
-    <ellipse cx="77" cy="72" rx="7" ry="5" fill="#ffb8c8" opacity="0.4"/>
-    <!-- Worried brow + eyes -->
-    <path d="M46 56 L54 59" stroke="#555" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M66 59 L74 56" stroke="#555" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <ellipse cx="52" cy="63" rx="4.5" ry="4.5" fill="#333"/>
-    <ellipse cx="68" cy="63" rx="4.5" ry="4.5" fill="#333"/>
-    <ellipse cx="53" cy="62" rx="1.5" ry="1.5" fill="white"/>
-    <ellipse cx="69" cy="62" rx="1.5" ry="1.5" fill="white"/>
-    <ellipse cx="60" cy="69" rx="4" ry="2.5" fill="#ffb8c8"/>
-    <!-- Worried mouth -->
-    <path d="M53 76 Q60 72 67 76" stroke="#888" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <circle cx="60" cy="118" r="12" fill="#f9c74f" stroke="#e8a500" stroke-width="1.5"/>
-    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">$</text>
-    <ellipse cx="45" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <ellipse cx="75" cy="113" rx="9" ry="7" fill="#f0e8f0"/>
-    <!-- Sweat/stress spiral -->
-    <path d="M85 42 Q90 38 88 44 Q86 50 92 48" stroke="#aaddff" stroke-width="2" fill="none" stroke-linecap="round"/>
-  </svg>`
+  return `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+    <ellipse cx="38" cy="30" rx="13" ry="28" fill="${skinColor}" ${earTransform}/>
+    <ellipse cx="38" cy="30" rx="7" ry="20" fill="${earColor}" opacity="0.85" ${earTransform}/>
+    <ellipse cx="82" cy="30" rx="13" ry="28" fill="${skinColor}" ${ear2Transform}/>
+    <ellipse cx="82" cy="30" rx="7" ry="20" fill="${earColor}" opacity="0.85" ${ear2Transform}/>
+    <ellipse cx="60" cy="100" rx="38" ry="34" fill="${skinColor}"/>
+    <circle cx="60" cy="65" r="30" fill="${skinColor}"/>
+    <ellipse cx="43" cy="72" rx="7" ry="5" fill="${earColor}" opacity="${blush}"/>
+    <ellipse cx="77" cy="72" rx="7" ry="5" fill="${earColor}" opacity="${blush}"/>
+    ${eyeMap[eyes] || eyeMap.happy}
+    <ellipse cx="60" cy="69" rx="4" ry="2.5" fill="${earColor}"/>
+    ${mouthMap[mouth] || mouthMap.smile}
+    ${coinGlowEl}
+    <circle cx="60" cy="118" r="12" fill="${coinColor}" stroke="#e8a500" stroke-width="1.5"/>
+    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">₱</text>
+    <ellipse cx="45" cy="113" rx="9" ry="7" fill="${skinColor}"/>
+    <ellipse cx="75" cy="113" rx="9" ry="7" fill="${skinColor}"/>
+    ${accessoryMap[accessory] || ''}
+    ${sleepZzz}
+  </svg>`;
+}
+
+// ── MASCOT STATE ───────────────────────────────────────────────────────────
+const M = {
+  currentExpr: 'happy',
+  currentMouth: 'smile',
+  accessory: 'none',
+  skinColor: '#f0e8f0',
+  earColor: '#ffb8c8',
+  coinColor: '#f9c74f',
+  blinkTimer: null,
+  earTimer: null,
+  idleTimer: null,
+  sleepTimer: null,
+  reactionTimer: null,
+  tipTimer: null,
+  tipIndex: 0,
+  tapCount: 0,
+  isSleeping: false,
+  isPetting: false,
+  eyeOffset: 0,
+  earTilt: 0,
+  isBlinking: false,
+  achievements: new Set(),
 };
 
-// Tips for the home page - cycling with different expressions
-const NASHA_TIPS = [
-  { expr: 'happy',      msg: "Great to see you, <strong>Nasha</strong>! Log every peso — awareness is the first step 🐰" },
-  { expr: 'excited',    msg: "Every peso tracked is a peso <strong>understood</strong>. You're doing amazing! ✨" },
-  { expr: 'winking',    msg: "Did you know? Small daily savings add up to <strong>big goals</strong>. Keep it up! 😉" },
-  { expr: 'thinking',   msg: "Hmm... Have you set your <strong>budget limits</strong> for this month yet? 💭" },
-  { expr: 'proud',      msg: "Your savings rate is <strong>improving</strong>. I'm so proud of you, Nasha! 🌟" },
-  { expr: 'determined', msg: "No-spend days are <strong>wins</strong>! Every streak counts. Stay strong! 💪" },
-  { expr: 'happyhug',   msg: "Budget discipline: <strong>level up!</strong> Keep logging everything, Nasha! 🎉" },
-];
-
-const NASHA_REACTIONS = {
-  income:          { expr: 'excited',    msg: "Yay! Income logged! Every peso in brings you closer to your goals 💚" },
-  expense:         { expr: 'thinking',   msg: "Expense noted. Stay mindful of your budget, Nasha! 💭" },
-  expenseBig:      { expr: 'worried',    msg: "That's a big one! Make sure it fits your monthly budget ⚠️" },
-  budgetWarn:      { expr: 'worried',    msg: "Heads up! You're getting close to your budget limit. Careful now! 😟" },
-  budgetExceeded:  { expr: 'surprised',  msg: "Oops! Budget exceeded! Time to pause spending in this category 😮" },
-  transfer:        { expr: 'winking',    msg: "Transfer done! Smart money management, Nasha 😉" },
-  goalReached:     { expr: 'happyhug',   msg: "🎉 GOAL REACHED! You did it, Nasha! I'm so proud! 🐰💕" },
-  streak:          { expr: 'proud',      msg: "No-spend streak! You're on fire, Nasha! Keep it going! 🔥" },
-  tap:             { expr: 'happy',      msg: "Hi Nasha! I'm here to help you track every peso! 🐰" },
-};
-
-let mascotTipIndex = 0;
-let mascotAnimTimer = null;
-
-function setMascotExpression(expr, animate = true) {
+// ── RENDER MASCOT ──────────────────────────────────────────────────────────
+function renderMascot(overrides = {}) {
   const wrap = document.getElementById('mascot-svg-wrap');
   if (!wrap) return;
-  const svg = RABBIT_EXPRESSIONS[expr] || RABBIT_EXPRESSIONS.happy;
+  wrap.innerHTML = buildRabbit({
+    eyes: M.currentExpr,
+    mouth: M.currentMouth,
+    accessory: M.accessory,
+    skinColor: M.skinColor,
+    earColor: M.earColor,
+    coinColor: M.coinColor,
+    sleeping: M.isSleeping,
+    earTilt: M.earTilt,
+    eyeOffset: M.eyeOffset,
+    ...overrides,
+  });
+}
+
+function setExpression(eyes, mouth = 'smile', animate = true) {
+  if (M.isSleeping && eyes !== 'sleeping') wakeMascot();
+  M.currentExpr = eyes;
+  M.currentMouth = mouth;
   if (animate) {
-    wrap.style.transition = 'transform 0.15s ease, opacity 0.15s ease';
-    wrap.style.transform = 'scale(0.85)';
-    wrap.style.opacity = '0.5';
-    setTimeout(() => {
-      wrap.innerHTML = svg;
-      wrap.style.transform = 'scale(1)';
-      wrap.style.opacity = '1';
-    }, 150);
+    const wrap = document.getElementById('mascot-svg-wrap');
+    if (wrap) {
+      wrap.style.transform = 'scale(0.88)';
+      wrap.style.opacity = '0.6';
+      setTimeout(() => {
+        renderMascot();
+        wrap.style.transform = 'scale(1)';
+        wrap.style.opacity = '1';
+      }, 120);
+    }
   } else {
-    wrap.innerHTML = svg;
+    renderMascot();
   }
 }
 
-function setMascotMessage(msg, animate = true) {
+function setMessage(msg, animate = true) {
   const el = document.getElementById('mascot-message');
   if (!el) return;
   if (animate) {
-    el.style.transition = 'opacity 0.2s';
     el.style.opacity = '0';
-    setTimeout(() => {
-      el.innerHTML = msg;
-      el.style.opacity = '1';
-    }, 200);
+    setTimeout(() => { el.innerHTML = msg; el.style.opacity = '1'; }, 180);
   } else {
     el.innerHTML = msg;
   }
 }
 
-function showMascotReaction(key) {
-  const reaction = NASHA_REACTIONS[key];
-  if (!reaction) return;
-  setMascotExpression(reaction.expr);
-  setMascotMessage(reaction.msg);
-  // Auto-return to home tip after 4 seconds
-  clearTimeout(mascotAnimTimer);
-  mascotAnimTimer = setTimeout(() => { updateMascotForStreak(); }, 4000);
-}
+// ── IDLE ANIMATIONS ────────────────────────────────────────────────────────
+function startIdleAnimations() {
+  stopIdleAnimations();
 
-function updateMascotForStreak() {
-  const streak = calcStreak();
-  let expr, msg;
-  if (streak === 0) {
-    expr = 'thinking'; msg = `Start your no-spend streak today, <strong>Nasha</strong>! 💭`;
-  } else if (streak >= 7) {
-    expr = 'happyhug'; msg = `<strong>${streak}-day streak!</strong> Incredible, Nasha! You're unstoppable! 🎉`;
-  } else if (streak >= 3) {
-    expr = 'proud'; msg = `<strong>${streak} days</strong> no-spend! You're on a roll, Nasha! 🔥`;
-  } else {
-    expr = 'happy'; msg = `<strong>${streak}-day</strong> no-spend streak! Keep it going! 🐰`;
+  // Blink every 3–5s
+  function scheduleBlink() {
+    M.blinkTimer = setTimeout(() => {
+      if (M.isSleeping || M.isPetting) { scheduleBlink(); return; }
+      M.isBlinking = true;
+      renderMascot({ eyes: 'sleeping' }); // closed = blink
+      setTimeout(() => {
+        M.isBlinking = false;
+        renderMascot();
+        scheduleBlink();
+      }, 150);
+    }, 3000 + Math.random() * 2000);
   }
-  setMascotExpression(expr);
-  setMascotMessage(msg);
-  document.getElementById('streak-label').textContent = `${streak}-day no-spend streak`;
+  scheduleBlink();
+
+  // Ear wiggle every 5–9s
+  function scheduleEarWiggle() {
+    M.earTimer = setTimeout(() => {
+      if (M.isSleeping) { scheduleEarWiggle(); return; }
+      let ticks = 0;
+      const dirs = [4, -4, 3, -3, 2, 0];
+      const wiggle = setInterval(() => {
+        M.earTilt = dirs[ticks] || 0;
+        renderMascot();
+        ticks++;
+        if (ticks >= dirs.length) {
+          clearInterval(wiggle);
+          M.earTilt = 0;
+          renderMascot();
+          scheduleEarWiggle();
+        }
+      }, 80);
+    }, 5000 + Math.random() * 4000);
+  }
+  scheduleEarWiggle();
+
+  // Look around every 7–12s
+  function scheduleLook() {
+    M.idleTimer = setTimeout(() => {
+      if (M.isSleeping) { scheduleLook(); return; }
+      const positions = [4, 8, 4, 0, -4, -8, -4, 0];
+      let i = 0;
+      const look = setInterval(() => {
+        M.eyeOffset = positions[i] || 0;
+        renderMascot();
+        i++;
+        if (i >= positions.length) {
+          clearInterval(look);
+          M.eyeOffset = 0;
+          renderMascot();
+          scheduleLook();
+        }
+      }, 200);
+    }, 7000 + Math.random() * 5000);
+  }
+  scheduleLook();
+
+  // Sleep after 60s inactivity
+  scheduleSleep();
 }
 
-function cycleMascotTip() {
-  const tip = NASHA_TIPS[mascotTipIndex % NASHA_TIPS.length];
-  mascotTipIndex++;
-  setMascotExpression(tip.expr);
-  setMascotMessage(tip.msg);
+function scheduleSleep() {
+  clearTimeout(M.sleepTimer);
+  M.sleepTimer = setTimeout(() => {
+    if (!M.isSleeping) sleepMascot();
+  }, 60000);
 }
 
+function resetInactivity() {
+  scheduleSleep();
+  if (M.isSleeping) wakeMascot();
+}
 
-// ── MASCOT TAP ─────────────────────────────────────────────────────────────
-let tapCount = 0;
-const tapMessages = [
-  { expr: 'happy',      msg: "Hi <strong>Nasha</strong>! I'm here to cheer you on! 🐰" },
-  { expr: 'winking',    msg: "Psst! Every peso logged = a peso <strong>understood</strong>! 😉" },
-  { expr: 'excited',    msg: "You're doing <strong>amazing</strong>, Nasha! Keep it up! ✨" },
-  { expr: 'proud',      msg: "I believe in you! You <strong>got this</strong>! 🌟" },
-  { expr: 'happyhug',   msg: "Big hugs, <strong>Nasha</strong>! Your future self thanks you! 💕" },
-  { expr: 'determined', msg: "Financial freedom is a <strong>journey</strong>. One peso at a time! 💪" },
-  { expr: 'thinking',   msg: "Thinking... Maybe check your <strong>budget</strong> today? 🤔" },
-];
-function handleMascotTap() {
+function sleepMascot() {
+  M.isSleeping = true;
+  setExpression('sleeping', 'flat');
+  setMessage('Zzz... <em style="color:var(--text-muted);font-size:11px">Tap me to wake up!</em>');
+  // Floating Zzz animation via CSS class on wrap
   const wrap = document.getElementById('mascot-svg-wrap');
-  if (wrap) {
-    wrap.classList.remove('mascot-bounce');
-    void wrap.offsetWidth;
-    wrap.classList.add('mascot-bounce');
-    setTimeout(() => wrap.classList.remove('mascot-bounce'), 500);
+  if (wrap) wrap.classList.add('mascot-sleeping');
+}
+
+function wakeMascot() {
+  M.isSleeping = false;
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (wrap) wrap.classList.remove('mascot-sleeping');
+  setExpression('surprised', 'open');
+  setMessage('Oh! I dozed off 😅 What did I miss?');
+  setTimeout(() => updateMascotForContext(), 2500);
+}
+
+function stopIdleAnimations() {
+  clearTimeout(M.blinkTimer);
+  clearTimeout(M.earTimer);
+  clearTimeout(M.idleTimer);
+  clearTimeout(M.sleepTimer);
+}
+
+// ── REACTION SYSTEM ────────────────────────────────────────────────────────
+const REACTIONS = {
+  income:         { eyes:'excited',   mouth:'grin',   msg:'Yay! Money in! 💚 Every peso gets you closer to your goals!' },
+  expense:        { eyes:'thinking',  mouth:'flat',   msg:'Got it! Stay mindful of your spending, Nasha 💭' },
+  expenseBig:     { eyes:'worried',   mouth:'frown',  msg:"That's a big one! Make sure it fits your budget ⚠️" },
+  budgetWarn:     { eyes:'worried',   mouth:'frown',  msg:"Heads up! Getting close to your budget limit. Careful! 😟" },
+  budgetExceeded: { eyes:'surprised', mouth:'open',   msg:"Oops! Budget exceeded! Time to pause spending here 😮" },
+  transfer:       { eyes:'winking',   mouth:'smirk',  msg:"Transfer done! Smart money moves, Nasha 😉" },
+  goalReached:    { eyes:'heart',     mouth:'grin',   msg:"🎉 GOAL REACHED! You did it! I'm SO proud of you! 💕" },
+  streak3:        { eyes:'proud',     mouth:'grin',   msg:"3-day no-spend streak! You're on a roll! 🔥" },
+  streak7:        { eyes:'excited',   mouth:'grin',   msg:"7 days! INCREDIBLE! Dance time! 🕺✨" },
+  streak30:       { eyes:'heart',     mouth:'grin',   msg:"30-DAY STREAK! You are UNSTOPPABLE, Nasha! 👑" },
+  streak100:      { eyes:'heart',     mouth:'grin',   msg:"100 DAYS! Legendary! You've unlocked GOLDEN NASHA! 🌟" },
+  firstSave:      { eyes:'excited',   mouth:'grin',   msg:"First income logged! Your journey starts NOW! ✨" },
+  saved1000:      { eyes:'proud',     mouth:'grin',   msg:"₱1,000 saved! That's how it's done! 🎯" },
+  saved10000:     { eyes:'heart',     mouth:'grin',   msg:"₱10,000 SAVED! You're a savings superstar! 🏆" },
+  budgetMaster:   { eyes:'proud',     mouth:'smirk',  msg:"Under budget this month! Budget Master unlocked! 😎" },
+  petting:        { eyes:'sleeping',  mouth:'smile',  msg:'Purrrr... 😊 *happy rabbit noises*' },
+};
+
+function showReaction(key, extraFX = null) {
+  const r = REACTIONS[key];
+  if (!r) return;
+  clearTimeout(M.reactionTimer);
+  setExpression(r.eyes, r.mouth);
+  setMessage(r.msg);
+  if (extraFX) extraFX();
+  M.reactionTimer = setTimeout(() => updateMascotForContext(), 4500);
+}
+
+// ── PARTICLE EFFECTS ───────────────────────────────────────────────────────
+function spawnParticles(type = 'sparkle') {
+  const container = document.getElementById('mascot-particles');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (type === 'confetti') {
+    const colors = ['#f9c74f','#e07898','#4cc9f0','#7fff7f','#ff6b6b','#c77dff'];
+    for (let i = 0; i < 28; i++) {
+      const el = document.createElement('div');
+      el.className = 'particle confetti-p';
+      el.style.cssText = `
+        position:absolute;
+        width:${5 + Math.random()*5}px;
+        height:${5 + Math.random()*5}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        border-radius:${Math.random()>0.5?'50%':'2px'};
+        left:${10 + Math.random()*80}%;
+        top:0;
+        animation: confettiFall ${0.8+Math.random()*1.2}s ease-in forwards;
+        animation-delay:${Math.random()*0.4}s;
+        transform: rotate(${Math.random()*360}deg);
+      `;
+      container.appendChild(el);
+    }
+  } else if (type === 'coins') {
+    for (let i = 0; i < 12; i++) {
+      const el = document.createElement('div');
+      el.className = 'particle coin-p';
+      el.style.cssText = `
+        position:absolute;
+        width:16px;height:16px;
+        background:#f9c74f;
+        border:2px solid #e8a500;
+        border-radius:50%;
+        font-size:10px;line-height:12px;text-align:center;color:#c8850a;font-weight:bold;
+        left:${5 + Math.random()*90}%;
+        top:-10px;
+        animation: coinFall ${0.6+Math.random()*1}s ease-in forwards;
+        animation-delay:${Math.random()*0.6}s;
+      `;
+      el.textContent = '₱';
+      container.appendChild(el);
+    }
+  } else if (type === 'sparkle') {
+    const sparkles = ['✦','✧','⊹','✨','⋆'];
+    for (let i = 0; i < 8; i++) {
+      const el = document.createElement('div');
+      el.className = 'particle sparkle-p';
+      el.style.cssText = `
+        position:absolute;
+        font-size:${10+Math.random()*10}px;
+        color:#f9c74f;
+        left:${Math.random()*100}%;
+        top:${Math.random()*80}%;
+        animation: sparklePop ${0.4+Math.random()*0.6}s ease-out forwards;
+        animation-delay:${Math.random()*0.3}s;
+      `;
+      el.textContent = sparkles[Math.floor(Math.random()*sparkles.length)];
+      container.appendChild(el);
+    }
+  } else if (type === 'hearts') {
+    for (let i = 0; i < 8; i++) {
+      const el = document.createElement('div');
+      el.style.cssText = `
+        position:absolute;
+        font-size:${12+Math.random()*10}px;
+        left:${Math.random()*100}%;
+        top:${20+Math.random()*60}%;
+        animation: floatUp ${0.8+Math.random()*0.8}s ease-out forwards;
+        animation-delay:${Math.random()*0.4}s;
+      `;
+      el.textContent = '♥';
+      el.style.color = '#e07898';
+      container.appendChild(el);
+    }
   }
-  const msg = tapMessages[tapCount % tapMessages.length];
-  tapCount++;
-  setMascotExpression(msg.expr);
-  setMascotMessage(msg.msg);
-  clearTimeout(mascotAnimTimer);
-  mascotAnimTimer = setTimeout(() => updateMascotForStreak(), 4000);
+
+  setTimeout(() => { container.innerHTML = ''; }, 2500);
+}
+
+// ── HOP / DANCE ANIMATIONS ─────────────────────────────────────────────────
+function mascotHop(times = 2) {
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (!wrap) return;
+  wrap.classList.remove('mascot-hop','mascot-dance','mascot-bounce');
+  void wrap.offsetWidth;
+  wrap.classList.add('mascot-hop');
+  setTimeout(() => wrap.classList.remove('mascot-hop'), times * 500);
+}
+
+function mascotDance() {
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (!wrap) return;
+  wrap.classList.remove('mascot-hop','mascot-dance','mascot-bounce');
+  void wrap.offsetWidth;
+  wrap.classList.add('mascot-dance');
+  setTimeout(() => wrap.classList.remove('mascot-dance'), 1600);
+}
+
+function mascotBounce() {
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (!wrap) return;
+  wrap.classList.remove('mascot-hop','mascot-dance','mascot-bounce');
+  void wrap.offsetWidth;
+  wrap.classList.add('mascot-bounce');
+  setTimeout(() => wrap.classList.remove('mascot-bounce'), 500);
+}
+
+// ── CONTEXT-AWARE STATE ────────────────────────────────────────────────────
+function updateMascotForContext() {
+  const streak = calcStreak();
+  // Unlock accessories for streaks
+  if (streak >= 100) {
+    M.accessory = 'crown';
+    M.skinColor = '#fff9c4';  // golden skin
+    M.coinColor = '#ffd700';
+  } else if (streak >= 30) {
+    M.accessory = 'crown';
+  } else if (streak >= 7) {
+    M.accessory = 'bowtie';
+  } else {
+    M.accessory = 'none';
+    M.skinColor = '#f0e8f0';
+    M.coinColor = '#f9c74f';
+  }
+
+  let eyes, mouth, msg;
+  if (streak === 0) {
+    eyes = 'thinking'; mouth = 'flat';
+    msg = `Start your no-spend streak today, <strong>Nasha</strong>! Every day counts 💭`;
+  } else if (streak >= 100) {
+    eyes = 'heart'; mouth = 'grin';
+    msg = `<strong>💫 ${streak}-day streak!</strong> You've achieved LEGENDARY status, Nasha!`;
+  } else if (streak >= 30) {
+    eyes = 'heart'; mouth = 'grin';
+    msg = `<strong>👑 ${streak} days!</strong> You're absolutely unstoppable, Nasha!`;
+  } else if (streak >= 7) {
+    eyes = 'excited'; mouth = 'grin';
+    msg = `<strong>🎉 ${streak}-day streak!</strong> You're on FIRE, Nasha! Keep dancing! 🕺`;
+  } else if (streak >= 3) {
+    eyes = 'proud'; mouth = 'smile';
+    msg = `<strong>🔥 ${streak} days</strong> no-spend! You're on a roll!`;
+  } else {
+    eyes = 'happy'; mouth = 'smile';
+    msg = `<strong>${streak}-day</strong> no-spend streak! Keep it going! 🐰`;
+  }
+
+  setExpression(eyes, mouth);
+  setMessage(msg);
+  document.getElementById('streak-label').textContent = `${streak}-day no-spend streak`;
+  renderMascot();
+}
+
+// ── ACHIEVEMENT CHECKS ─────────────────────────────────────────────────────
+function checkAchievements(type, amount) {
+  const totalIncome = state.transactions
+    .filter(t => t.type === 'income')
+    .reduce((s, t) => s + t.amount, 0);
+
+  if (type === 'income') {
+    if (!M.achievements.has('firstSave') && state.transactions.filter(t=>t.type==='income').length === 1) {
+      M.achievements.add('firstSave');
+      setTimeout(() => {
+        showReaction('firstSave');
+        spawnParticles('sparkle');
+        mascotHop(3);
+      }, 300);
+      return;
+    }
+    if (!M.achievements.has('saved1000') && totalIncome >= 1000) {
+      M.achievements.add('saved1000');
+      setTimeout(() => {
+        showReaction('saved1000');
+        spawnParticles('coins');
+        mascotBounce();
+      }, 300);
+      return;
+    }
+    if (!M.achievements.has('saved10000') && totalIncome >= 10000) {
+      M.achievements.add('saved10000');
+      setTimeout(() => {
+        showReaction('saved10000');
+        spawnParticles('confetti');
+        mascotDance();
+      }, 300);
+      return;
+    }
+  }
+
+  // streak milestone checks
+  const streak = calcStreak();
+  if (streak === 3 && !M.achievements.has('streak3')) {
+    M.achievements.add('streak3');
+    showReaction('streak3');
+    spawnParticles('sparkle');
+    mascotHop(3);
+  } else if (streak === 7 && !M.achievements.has('streak7')) {
+    M.achievements.add('streak7');
+    showReaction('streak7');
+    spawnParticles('confetti');
+    mascotDance();
+  } else if (streak === 30 && !M.achievements.has('streak30')) {
+    M.achievements.add('streak30');
+    showReaction('streak30');
+    spawnParticles('confetti');
+    mascotDance();
+  } else if (streak === 100 && !M.achievements.has('streak100')) {
+    M.achievements.add('streak100');
+    showReaction('streak100');
+    spawnParticles('coins');
+    mascotDance();
+  }
+}
+
+// ── PUBLIC API (called by existing code) ──────────────────────────────────
+function showMascotReaction(key) {
+  resetInactivity();
+  const fxMap = {
+    income:         () => { checkAchievements('income'); spawnParticles('sparkle'); mascotHop(); },
+    expense:        () => {},
+    expenseBig:     () => { spawnParticles('sparkle'); },
+    budgetWarn:     () => {},
+    budgetExceeded: () => { spawnParticles('sparkle'); },
+    transfer:       () => { spawnParticles('sparkle'); mascotBounce(); },
+    goalReached:    () => { spawnParticles('confetti'); mascotDance(); },
+  };
+  showReaction(key, fxMap[key] || null);
+}
+
+// ── TAP INTERACTION ────────────────────────────────────────────────────────
+const TAP_MSGS = [
+  { eyes:'happy',      mouth:'smile', msg:"Hi <strong>Nasha</strong>! I'm here to cheer you on! 🐰" },
+  { eyes:'winking',    mouth:'smirk', msg:"Psst! Every peso logged = a peso <strong>understood</strong>! 😉" },
+  { eyes:'excited',    mouth:'grin',  msg:"You're doing <strong>amazing</strong>, Nasha! Keep it up! ✨" },
+  { eyes:'proud',      mouth:'smile', msg:"I believe in you! You <strong>got this</strong>! 🌟" },
+  { eyes:'heart',      mouth:'grin',  msg:"Big hugs, <strong>Nasha</strong>! Your future self thanks you! 💕" },
+  { eyes:'determined', mouth:'flat',  msg:"Financial freedom is a <strong>journey</strong>. One peso at a time! 💪" },
+  { eyes:'thinking',   mouth:'flat',  msg:"Thinking... Maybe check your <strong>budget</strong> today? 🤔" },
+];
+
+function handleMascotTap() {
+  resetInactivity();
+  if (M.isSleeping) { wakeMascot(); return; }
+
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (wrap) { mascotBounce(); }
+
+  // Petting mode: 3 taps in a row within 2s
+  M.tapCount++;
+  if (M.tapCount >= 3) {
+    M.tapCount = 0;
+    M.isPetting = true;
+    setExpression('sleeping', 'smile');
+    setMessage(REACTIONS.petting.msg);
+    spawnParticles('hearts');
+    clearTimeout(M.reactionTimer);
+    M.reactionTimer = setTimeout(() => {
+      M.isPetting = false;
+      updateMascotForContext();
+    }, 3000);
+    return;
+  }
+  clearTimeout(M._tapReset);
+  M._tapReset = setTimeout(() => { M.tapCount = 0; }, 2000);
+
+  const tip = TAP_MSGS[M.tapCount % TAP_MSGS.length];
+  clearTimeout(M.reactionTimer);
+  setExpression(tip.eyes, tip.mouth);
+  setMessage(tip.msg);
+  M.reactionTimer = setTimeout(() => updateMascotForContext(), 4000);
+}
+
+// Ear tap
+function handleEarTap() {
+  resetInactivity();
+  const dirs = [6, -6, 5, -5, 4, 0];
+  let i = 0;
+  const wiggle = setInterval(() => {
+    M.earTilt = dirs[i] || 0;
+    renderMascot();
+    i++;
+    if (i >= dirs.length) {
+      clearInterval(wiggle);
+      M.earTilt = 0;
+      renderMascot();
+    }
+  }, 70);
+  setMessage('*ear wiggle* 👂');
+  setTimeout(() => setMessage(document.getElementById('mascot-message').innerHTML), 1500);
+}
+
+// Coin tap
+function handleCoinTap() {
+  resetInactivity();
+  spawnParticles('coins');
+  mascotBounce();
+  const savings = state.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  setMessage(`Total saved: <strong style="color:var(--green-bright)">${fmt(savings)}</strong> 💰`);
+  clearTimeout(M.reactionTimer);
+  M.reactionTimer = setTimeout(() => updateMascotForContext(), 3000);
+}
+
+// ── CYCLING TIPS ───────────────────────────────────────────────────────────
+const TIPS = [
+  { eyes:'happy',      mouth:'smile', msg:"Great to see you, <strong>Nasha</strong>! Log every peso — awareness is the first step 🐰" },
+  { eyes:'excited',    mouth:'grin',  msg:"Every peso tracked is a peso <strong>understood</strong>. You're doing amazing! ✨" },
+  { eyes:'winking',    mouth:'smirk', msg:"Did you know? Small daily savings add up to <strong>big goals</strong>. Keep it up! 😉" },
+  { eyes:'thinking',   mouth:'flat',  msg:"Hmm... Have you set your <strong>budget limits</strong> for this month yet? 💭" },
+  { eyes:'proud',      mouth:'smile', msg:"Your savings rate is <strong>improving</strong>. I'm so proud of you, Nasha! 🌟" },
+  { eyes:'determined', mouth:'flat',  msg:"No-spend days are <strong>wins</strong>! Every streak counts. Stay strong! 💪" },
+  { eyes:'heart',      mouth:'grin',  msg:"Budget discipline: <strong>level up!</strong> Keep logging everything, Nasha! 🎉" },
+  { eyes:'winking',    mouth:'smirk', msg:"Future you will <strong>thank you</strong> for every peso saved today! 😉" },
+  { eyes:'excited',    mouth:'grin',  msg:"One step closer to your <strong>goal</strong>! You've got this! ⭐" },
+  { eyes:'proud',      mouth:'smile', msg:"Savings are <strong>growing</strong>! I can feel the momentum! 📈" },
+];
+
+function cycleTip() {
+  if (M.isSleeping || M.isPetting) return;
+  // Don't override active reaction
+  const tip = TIPS[M.tipIndex % TIPS.length];
+  M.tipIndex++;
+  setExpression(tip.eyes, tip.mouth);
+  setMessage(tip.msg);
+}
+
+// ── INIT MASCOT ────────────────────────────────────────────────────────────
+function initMascot() {
+  renderMascot();
+  updateMascotForContext();
+  startIdleAnimations();
+
+  // Cycle tips every 8s
+  M.tipTimer = setInterval(() => {
+    if (document.getElementById('page-home').classList.contains('active') && !M.isSleeping) {
+      cycleTip();
+    }
+  }, 8000);
+
+  // Reset inactivity on any interaction
+  document.addEventListener('touchstart', resetInactivity, { passive: true });
+  document.addEventListener('click', resetInactivity, { passive: true });
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 loadState();
 renderHome();
-// Cycle tips every 8s on home
-setInterval(() => {
-  if (document.getElementById('page-home').classList.contains('active')) {
-    cycleMascotTip();
-  }
-}, 8000);
+initMascot();
