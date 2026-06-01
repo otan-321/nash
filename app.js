@@ -149,7 +149,7 @@ function renderHome() {
   // Initialize rabbit SVG if empty
   const wrap = document.getElementById('mascot-svg-wrap');
   if (wrap && !wrap.querySelector('svg')) {
-    wrap.innerHTML = RABBIT_EXPRESSIONS.happy || '';
+    wrap.innerHTML = buildRabbit({ eyes: 'happy', mouth: 'smile' });
   }
   const now = new Date();
   const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
@@ -159,7 +159,7 @@ function renderHome() {
   document.getElementById('home-greeting-word').textContent = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
   document.getElementById('home-username').textContent = state.username;
 
-  updateMascotForStreak();
+  updateMascotForContext();
 
   const mon = now.getMonth(), yr = now.getFullYear();
   let income = 0, expense = 0;
@@ -478,10 +478,12 @@ function openEditTx(id) {
 // ── ADD TRANSACTION ─────────────────────────────────────────────────────────
 function openAddSheet() {
   state.editingTxId = null;
-  setTxType('expense');
+  state.selectedCategory = '';
   document.getElementById('tx-amount').value = '';
   document.getElementById('tx-note').value = '';
   renderAccountSelect();
+  setTxType('expense');
+  document.getElementById('submit-btn').textContent = 'Add Expense';
   document.getElementById('add-sheet').classList.add('open');
   setTimeout(() => document.getElementById('tx-amount').focus(), 400);
 }
