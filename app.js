@@ -1,3 +1,84 @@
+// ── BANKS ──────────────────────────────────────────────────────────────────
+const BANKS = [
+  // Philippines
+  { key:'gcash',   name:'GCash',    icon:'📱', color:'#007aff', svg:'gcash'   },
+  { key:'maya',    name:'Maya',     icon:'💚', color:'#00b96b', svg:'maya'    },
+  { key:'bdo',     name:'BDO',      icon:'🏦', color:'#003087', svg:'bdo'     },
+  { key:'bpi',     name:'BPI',      icon:'🏦', color:'#ce0000', svg:'bpi'     },
+  { key:'metrobank',name:'Metrobank',icon:'🏦',color:'#003087', svg:'metrobank'},
+  { key:'pnb',     name:'PNB',      icon:'🏦', color:'#003366', svg:'pnb'     },
+  { key:'landbank',name:'Landbank', icon:'🏦', color:'#006633', svg:'landbank' },
+  { key:'rcbc',    name:'RCBC',     icon:'🏦', color:'#c8102e', svg:'rcbc'    },
+  { key:'unionbank',name:'UnionBank',icon:'🏦',color:'#e87722', svg:'unionbank'},
+  { key:'security',name:'Security Bank',icon:'🏦',color:'#00205b',svg:'security'},
+  { key:'eastwest',name:'EastWest', icon:'🏦', color:'#00205b', svg:'eastwest' },
+  { key:'psbank',  name:'PSBank',   icon:'🏦', color:'#e60026', svg:'psbank'  },
+  { key:'seabank', name:'SeaBank',  icon:'🏦', color:'#ee4d2d', svg:'seabank' },
+  { key:'tonik',   name:'Tonik',    icon:'💜', color:'#6c00ff', svg:'tonik'   },
+  { key:'cimb',    name:'CIMB',     icon:'🏦', color:'#e21d24', svg:'cimb'    },
+  // International
+  { key:'paypal',  name:'PayPal',   icon:'🅿️', color:'#003087', svg:'paypal'  },
+  { key:'wise',    name:'Wise',     icon:'💚', color:'#00b67a', svg:'wise'    },
+  { key:'hsbc',    name:'HSBC',     icon:'🏦', color:'#db0011', svg:'hsbc'    },
+  { key:'citibank',name:'Citibank', icon:'🏦', color:'#003b8e', svg:'citibank' },
+  { key:'cash',    name:'Cash',     icon:'💵', color:'#2ecc71', svg:'cash'    },
+  { key:'credit',  name:'Credit Card',icon:'💳',color:'#888',  svg:'credit'  },
+  { key:'other',   name:'Other',    icon:'🏦', color:'#666',   svg:'other'   },
+];
+
+// SVG logos rendered inline (colored shapes/letters as brand marks)
+function getBankSVG(key, color) {
+  const c = color;
+  const maps = {
+    gcash:    `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#007aff"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="13" font-weight="800" font-family="Arial">G</text></svg>`,
+    maya:     `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#00b96b"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="11" font-weight="800" font-family="Arial">maya</text></svg>`,
+    bdo:      `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#003087"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="12" font-weight="800" font-family="Arial">BDO</text></svg>`,
+    bpi:      `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#ce0000"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="12" font-weight="800" font-family="Arial">BPI</text></svg>`,
+    metrobank:`<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#003087"/><text x="16" y="16" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial" dy="0">METRO</text><text x="16" y="25" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial">BANK</text></svg>`,
+    pnb:      `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#003366"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="12" font-weight="800" font-family="Arial">PNB</text></svg>`,
+    landbank: `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#006633"/><text x="16" y="15" text-anchor="middle" fill="white" font-size="7.5" font-weight="700" font-family="Arial">LAND</text><text x="16" y="24" text-anchor="middle" fill="white" font-size="7.5" font-weight="700" font-family="Arial">BANK</text></svg>`,
+    rcbc:     `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#c8102e"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="11" font-weight="800" font-family="Arial">RCBC</text></svg>`,
+    unionbank:`<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#e87722"/><text x="16" y="15" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial">UNION</text><text x="16" y="24" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial">BANK</text></svg>`,
+    security: `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#00205b"/><text x="16" y="14" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial">SECURITY</text><text x="16" y="23" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial">BANK</text></svg>`,
+    eastwest: `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#00205b"/><text x="16" y="14" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial">EAST</text><text x="16" y="23" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial">WEST</text></svg>`,
+    psbank:   `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#e60026"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="10" font-weight="800" font-family="Arial">PSBank</text></svg>`,
+    seabank:  `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#ee4d2d"/><text x="16" y="14" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial">SEA</text><text x="16" y="23" text-anchor="middle" fill="white" font-size="7" font-weight="700" font-family="Arial">BANK</text></svg>`,
+    tonik:    `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#6c00ff"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="10" font-weight="800" font-family="Arial">tonik</text></svg>`,
+    cimb:     `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#e21d24"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="11" font-weight="800" font-family="Arial">CIMB</text></svg>`,
+    paypal:   `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#003087"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="7.5" font-weight="800" font-family="Arial">PayPal</text></svg>`,
+    wise:     `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#00b67a"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="10" font-weight="800" font-family="Arial">Wise</text></svg>`,
+    hsbc:     `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#db0011"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="10" font-weight="800" font-family="Arial">HSBC</text></svg>`,
+    citibank: `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#003b8e"/><text x="16" y="15" text-anchor="middle" fill="white" font-size="7.5" font-weight="700" font-family="Arial">citi</text><text x="16" y="24" text-anchor="middle" fill="white" font-size="6" font-weight="600" font-family="Arial">bank</text></svg>`,
+    cash:     `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#2ecc71"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="18">💵</text></svg>`,
+    credit:   `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#555"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="17">💳</text></svg>`,
+    other:    `<svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#444"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="16">🏦</text></svg>`,
+  };
+  return maps[key] || maps.other;
+}
+
+function renderBankPicker(selectedKey) {
+  const grid = document.getElementById('bank-picker-grid');
+  if (!grid) return;
+  grid.innerHTML = BANKS.map(b => `
+    <div class="bank-tile ${selectedKey === b.key ? 'selected' : ''}" onclick="selectBank('${b.key}')">
+      ${getBankSVG(b.key, b.color)}
+      <span>${b.name}</span>
+    </div>
+  `).join('');
+}
+
+function selectBank(key) {
+  const bank = BANKS.find(b => b.key === key);
+  if (!bank) return;
+  document.getElementById('acct-icon').value = bank.icon;
+  document.getElementById('acct-bank-key').value = key;
+  // Update name field if empty or was a bank name
+  const nameField = document.getElementById('acct-name');
+  const isBankName = BANKS.some(b => nameField.value === b.name);
+  if (!nameField.value || isBankName) nameField.value = bank.name;
+  renderBankPicker(key);
+}
+
 // ── STATE ──────────────────────────────────────────────────────────────────
 const STATE_KEY = 'nash_state';
 let state = {
@@ -185,10 +266,15 @@ function renderWallet() {
   ).join('');
 
   const grid = document.getElementById('accounts-grid');
-  grid.innerHTML = state.accounts.map(acc => `
+  grid.innerHTML = state.accounts.map(acc => {
+    const bank = BANKS.find(b => b.key === acc.bankKey);
+    const iconHTML = bank
+      ? `<div class="account-icon" style="background:none;padding:0;overflow:hidden">${getBankSVG(bank.key, bank.color)}</div>`
+      : `<div class="account-icon">${acc.icon}</div>`;
+    return `
     <div class="account-card" onclick="openEditAccount('${acc.id}')">
       <div class="account-top">
-        <div class="account-icon">${acc.icon}</div>
+        ${iconHTML}
         <button class="account-more" onclick="event.stopPropagation();showAccountMenu('${acc.id}')">···</button>
       </div>
       <div class="account-name">${acc.name}</div>
@@ -196,7 +282,7 @@ function renderWallet() {
       <div class="account-bal-label">BALANCE</div>
       <div class="account-bal">${state.balancesHidden ? '₱ ••••' : fmt(acc.balance)}</div>
     </div>
-  `).join('') + `
+  `;}).join('') + `
     <div class="add-account-card" onclick="openAddAccount()">
       <div style="font-size:24px;color:var(--text-muted)">+</div>
       <span>Add Account</span>
@@ -229,7 +315,9 @@ function openAddAccount() {
   document.getElementById('acct-id').value = '';
   document.getElementById('acct-name').value = '';
   document.getElementById('acct-icon').value = '💳';
+  document.getElementById('acct-bank-key').value = '';
   document.getElementById('acct-balance').value = '';
+  renderBankPicker('');
   document.getElementById('acct-sheet').classList.add('open');
 }
 
@@ -240,7 +328,9 @@ function openEditAccount(id) {
   document.getElementById('acct-id').value = acc.id;
   document.getElementById('acct-name').value = acc.name;
   document.getElementById('acct-icon').value = acc.icon;
+  document.getElementById('acct-bank-key').value = acc.bankKey || '';
   document.getElementById('acct-balance').value = acc.balance;
+  renderBankPicker(acc.bankKey || '');
   document.getElementById('acct-sheet').classList.add('open');
 }
 
@@ -248,13 +338,14 @@ function saveAccount() {
   const id = document.getElementById('acct-id').value;
   const name = document.getElementById('acct-name').value.trim();
   const icon = document.getElementById('acct-icon').value.trim() || '💳';
+  const bankKey = document.getElementById('acct-bank-key').value || '';
   const balance = parseFloat(document.getElementById('acct-balance').value) || 0;
   if (!name) { showToast('Enter an account name'); return; }
   if (id) {
     const acc = state.accounts.find(a => a.id === id);
-    if (acc) { acc.name = name; acc.icon = icon; acc.balance = balance; }
+    if (acc) { acc.name = name; acc.icon = icon; acc.bankKey = bankKey; acc.balance = balance; }
   } else {
-    state.accounts.push({ id: 'acc_' + Date.now(), name, icon, type: 'Debit', currency: 'PHP', balance });
+    state.accounts.push({ id: 'acc_' + Date.now(), name, icon, bankKey, type: 'Debit', currency: 'PHP', balance });
   }
   saveState();
   document.getElementById('acct-sheet').classList.remove('open');

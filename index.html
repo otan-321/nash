@@ -208,6 +208,15 @@
 
     .divider { height: 1px; background: rgba(212,103,138,0.1); margin: 4px 0 14px; }
     .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; background: rgba(245,160,188,0.1); color: var(--green-bright); }
+    /* BANK PICKER */
+    .bank-picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; max-height: 220px; overflow-y: auto; scrollbar-width: none; }
+    .bank-picker-grid::-webkit-scrollbar { display: none; }
+    .bank-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 12px; border: 1.5px solid rgba(212,103,138,0.12); background: var(--surface2); cursor: pointer; transition: all 0.15s; }
+    .bank-tile:active, .bank-tile.selected { border-color: var(--green); background: var(--green-dim); }
+    .bank-tile svg, .bank-tile img { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; }
+    .bank-tile span { font-size: 9px; color: var(--text-dim); text-align: center; line-height: 1.2; font-weight: 500; }
+    .bank-tile.selected span { color: var(--green-bright); }
+
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .page.active .scroll-area > * { animation: fadeIn 0.25s ease both; }
   </style>
@@ -232,7 +241,34 @@
       <div class="home-greeting" id="home-date">MONDAY, JUNE 1</div>
       <div class="home-name">Good <span id="home-greeting-word">morning</span>, <strong id="home-username">Nash</strong>!</div>
       <div class="home-mascot-row">
-        <div style="font-size:60px;line-height:1;flex-shrink:0">🐰</div>
+        <div style="width:64px;height:64px;flex-shrink:0" id="mascot-svg-wrap">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+            <!-- ears -->
+            <ellipse cx="20" cy="16" rx="7" ry="14" fill="#f5a0bc" opacity="0.9"/>
+            <ellipse cx="44" cy="16" rx="7" ry="14" fill="#f5a0bc" opacity="0.9"/>
+            <ellipse cx="20" cy="16" rx="4" ry="10" fill="#ffd6e7"/>
+            <ellipse cx="44" cy="16" rx="4" ry="10" fill="#ffd6e7"/>
+            <!-- head -->
+            <ellipse cx="32" cy="36" rx="18" ry="17" fill="#fdeef4"/>
+            <!-- eyes -->
+            <ellipse cx="24" cy="32" rx="3" ry="3.5" fill="#1a0d12"/>
+            <ellipse cx="40" cy="32" rx="3" ry="3.5" fill="#1a0d12"/>
+            <circle cx="25" cy="31" r="1" fill="white"/>
+            <circle cx="41" cy="31" r="1" fill="white"/>
+            <!-- nose -->
+            <ellipse cx="32" cy="39" rx="2.5" ry="1.8" fill="#e07898"/>
+            <!-- mouth -->
+            <path d="M29 41 Q32 44 35 41" stroke="#c4607a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <!-- cheeks -->
+            <ellipse cx="19" cy="40" rx="5" ry="3" fill="#f5a0bc" opacity="0.35"/>
+            <ellipse cx="45" cy="40" rx="5" ry="3" fill="#f5a0bc" opacity="0.35"/>
+            <!-- whiskers -->
+            <line x1="9" y1="38" x2="22" y2="39" stroke="#c4607a" stroke-width="0.8" opacity="0.5"/>
+            <line x1="9" y1="41" x2="22" y2="41" stroke="#c4607a" stroke-width="0.8" opacity="0.5"/>
+            <line x1="42" y1="39" x2="55" y2="38" stroke="#c4607a" stroke-width="0.8" opacity="0.5"/>
+            <line x1="42" y1="41" x2="55" y2="41" stroke="#c4607a" stroke-width="0.8" opacity="0.5"/>
+          </svg>
+        </div>
         <div class="mascot-bubble">
           <div class="mascot-name">Nash</div>
           <div class="mascot-text" id="mascot-message">No-spend streak: <strong id="streak-count">0</strong> days. Keep it up!</div>
@@ -477,8 +513,10 @@
       <input class="form-input" type="text" id="acct-name" placeholder="e.g. BDO Savings" />
     </div>
     <div class="form-group">
-      <div class="form-label">Icon (emoji)</div>
-      <input class="form-input" type="text" id="acct-icon" placeholder="💳" maxlength="4" />
+      <div class="form-label">Bank / Wallet</div>
+      <div class="bank-picker-grid" id="bank-picker-grid"></div>
+      <input type="hidden" id="acct-icon" value="💳" />
+      <input type="hidden" id="acct-bank-key" value="" />
     </div>
     <div class="form-group">
       <div class="form-label">Balance (₱)</div>
