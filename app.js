@@ -662,7 +662,14 @@ function submitTransaction() {
     } else {
       // Big expense = more than 20% of any account balance
       const bigThreshold = account.balance * 0.2;
-      showMascotReaction(amount > bigThreshold ? 'expenseBig' : 'expense');
+      if (amount > bigThreshold) {
+        showMascotReaction('expenseBig');
+      } else if (state.budgets.length > 0) {
+        // All budgets healthy → thumbs up!
+        setTimeout(() => showMascotReaction('underBudget'), 400);
+      } else {
+        showMascotReaction('expense');
+      }
     }
   }
 }
@@ -988,7 +995,7 @@ if ('serviceWorker' in navigator) {
 // ── SVG RABBIT EXPRESSIONS ─────────────────────────────────────────────────
 function buildRabbit(opts = {}) {
   const {
-    eyes = 'happy',     // happy | excited | thinking | worried | surprised | sleeping | winking | proud | heart | determined
+    eyes = 'happy',     // happy | excited | thinking | worried | surprised | sleeping | winking | proud | heart | determined | thumbsup
     mouth = 'smile',    // smile | open | flat | frown | smirk
     blush = 0.5,
     earTilt = 0,        // degrees tilt for ear wiggle
@@ -999,6 +1006,9 @@ function buildRabbit(opts = {}) {
     coinGlow = false,
     eyeOffset = 0,      // for look-around
     sleeping = false,
+    piggyScale = 1,     // 0.7–1.3: piggy bank grows with savings
+    sweatDrop = false,  // show sweat drop for overspending
+    tailBounce = false, // tail highlight
   } = opts;
 
   const eyeMap = {
@@ -1035,6 +1045,8 @@ function buildRabbit(opts = {}) {
                   <ellipse cx="68" cy="62" rx="4.5" ry="4.5" fill="#333"/>
                   <ellipse cx="53" cy="61" rx="1.5" ry="1.5" fill="white"/>
                   <ellipse cx="69" cy="61" rx="1.5" ry="1.5" fill="white"/>`,
+    thumbsup:    `<path d="M47 62 Q52 57 57 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                  <path d="M64 61 Q68 58 72 62" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
   };
 
   const mouthMap = {
@@ -1077,7 +1089,28 @@ function buildRabbit(opts = {}) {
   const ear2Transform = earTilt !== 0
     ? `transform="rotate(${-earTilt} 82 60)"` : '';
 
+  // Dynamic piggy bank: scale based on savings level
+  const ps = Math.max(0.7, Math.min(1.4, piggyScale));
+  const piggyGlow = ps > 1.1 ? `<circle cx="60" cy="118" r="${14*ps}" fill="${coinColor}" opacity="0.18"/>` : '';
+
+  // Sweat drop for overspending
+  const sweatEl = sweatDrop
+    ? `<ellipse cx="78" cy="54" rx="3.5" ry="5" fill="#aaddff" opacity="0.85" transform="rotate(10 78 54)"/>
+       <path d="M78 49 Q80 44 78 40" stroke="#aaddff" stroke-width="1.5" fill="none" opacity="0.7"/>`
+    : '';
+
+  // Tail (small fluffy circle, bottom-right of body)
+  const tailEl = `<circle cx="88" cy="108" r="${tailBounce ? 7 : 5.5}" fill="${skinColor}" opacity="0.9" stroke="${earColor}" stroke-width="1"/>`;
+
+  // Thumbs up arm (shown when eyes === thumbsup)
+  const thumbsUpArm = eyes === 'thumbsup'
+    ? `<path d="M78 100 Q88 92 86 82" stroke="${skinColor}" stroke-width="8" fill="none" stroke-linecap="round"/>
+       <ellipse cx="86" cy="80" rx="5" ry="6" fill="${skinColor}"/>
+       <path d="M83 80 Q86 74 89 80" stroke="${earColor}" stroke-width="1.5" fill="none" stroke-linecap="round"/>`
+    : '';
+
   return `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+    ${tailEl}
     <ellipse cx="38" cy="30" rx="13" ry="28" fill="${skinColor}" ${earTransform}/>
     <ellipse cx="38" cy="30" rx="7" ry="20" fill="${earColor}" opacity="0.85" ${earTransform}/>
     <ellipse cx="82" cy="30" rx="13" ry="28" fill="${skinColor}" ${ear2Transform}/>
@@ -1089,9 +1122,14 @@ function buildRabbit(opts = {}) {
     ${eyeMap[eyes] || eyeMap.happy}
     <ellipse cx="60" cy="69" rx="4" ry="2.5" fill="${earColor}"/>
     ${mouthMap[mouth] || mouthMap.smile}
+    ${sweatEl}
+    ${thumbsUpArm}
+    ${piggyGlow}
     ${coinGlowEl}
-    <circle cx="60" cy="118" r="12" fill="${coinColor}" stroke="#e8a500" stroke-width="1.5"/>
-    <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">₱</text>
+    <g transform="translate(60,118) scale(${ps}) translate(-60,-118)">
+      <circle cx="60" cy="118" r="12" fill="${coinColor}" stroke="#e8a500" stroke-width="1.5"/>
+      <text x="60" y="123" text-anchor="middle" fill="#c8850a" font-size="11" font-weight="bold">₱</text>
+    </g>
     <ellipse cx="45" cy="113" rx="9" ry="7" fill="${skinColor}"/>
     <ellipse cx="75" cy="113" rx="9" ry="7" fill="${skinColor}"/>
     ${accessoryMap[accessory] || ''}
@@ -1121,6 +1159,11 @@ const M = {
   earTilt: 0,
   isBlinking: false,
   achievements: new Set(),
+  piggyScale: 1,        // grows with total savings
+  sweatDrop: false,     // shown on overspend
+  tailBounce: false,    // animated tail highlight
+  tailTimer: null,
+  isHovering: false,
 };
 
 // ── RENDER MASCOT ──────────────────────────────────────────────────────────
@@ -1137,6 +1180,9 @@ function renderMascot(overrides = {}) {
     sleeping: M.isSleeping,
     earTilt: M.earTilt,
     eyeOffset: M.eyeOffset,
+    piggyScale: M.piggyScale,
+    sweatDrop: M.sweatDrop,
+    tailBounce: M.tailBounce,
     ...overrides,
   });
 }
@@ -1145,8 +1191,11 @@ function setExpression(eyes, mouth = 'smile', animate = true) {
   if (M.isSleeping && eyes !== 'sleeping') wakeMascot();
   M.currentExpr = eyes;
   M.currentMouth = mouth;
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (wrap) {
+    wrap.classList.toggle('thumbsup-mode', eyes === 'thumbsup');
+  }
   if (animate) {
-    const wrap = document.getElementById('mascot-svg-wrap');
     if (wrap) {
       wrap.style.transform = 'scale(0.88)';
       wrap.style.opacity = '0.6';
@@ -1163,10 +1212,19 @@ function setExpression(eyes, mouth = 'smile', animate = true) {
 
 function setMessage(msg, animate = true) {
   const el = document.getElementById('mascot-message');
+  const bubble = el ? el.closest('.mascot-bubble') : null;
   if (!el) return;
   if (animate) {
     el.style.opacity = '0';
-    setTimeout(() => { el.innerHTML = msg; el.style.opacity = '1'; }, 180);
+    setTimeout(() => {
+      el.innerHTML = msg;
+      el.style.opacity = '1';
+      if (bubble) {
+        bubble.classList.remove('pop');
+        void bubble.offsetWidth;
+        bubble.classList.add('pop');
+      }
+    }, 180);
   } else {
     el.innerHTML = msg;
   }
@@ -1233,6 +1291,17 @@ function startIdleAnimations() {
   }
   scheduleLook();
 
+  // Tail bounce every 4–8s
+  function scheduleTail() {
+    M.tailTimer = setTimeout(() => {
+      if (M.isSleeping) { scheduleTail(); return; }
+      M.tailBounce = true;
+      renderMascot();
+      setTimeout(() => { M.tailBounce = false; renderMascot(); scheduleTail(); }, 350);
+    }, 4000 + Math.random() * 4000);
+  }
+  scheduleTail();
+
   // Sleep after 60s inactivity
   scheduleSleep();
 }
@@ -1272,6 +1341,7 @@ function stopIdleAnimations() {
   clearTimeout(M.earTimer);
   clearTimeout(M.idleTimer);
   clearTimeout(M.sleepTimer);
+  clearTimeout(M.tailTimer);
 }
 
 // ── REACTION SYSTEM ────────────────────────────────────────────────────────
@@ -1290,7 +1360,8 @@ const REACTIONS = {
   firstSave:      { eyes:'excited',   mouth:'grin',   msg:"First income logged! Your journey starts NOW! ✨" },
   saved1000:      { eyes:'proud',     mouth:'grin',   msg:"₱1,000 saved! That's how it's done! 🎯" },
   saved10000:     { eyes:'heart',     mouth:'grin',   msg:"₱10,000 SAVED! You're a savings superstar! 🏆" },
-  budgetMaster:   { eyes:'proud',     mouth:'smirk',  msg:"Under budget this month! Budget Master unlocked! 😎" },
+  budgetMaster:   { eyes:'thumbsup',  mouth:'smirk',  msg:"Under budget this month! Budget Master unlocked! 👍😎" },
+  underBudget:    { eyes:'thumbsup',  mouth:'smile',  msg:"Looking good! You're under budget — keep it up! 👍" },
   petting:        { eyes:'sleeping',  mouth:'smile',  msg:'Purrrr... 😊 *happy rabbit noises*' },
 };
 
@@ -1416,6 +1487,9 @@ function mascotBounce() {
 // ── CONTEXT-AWARE STATE ────────────────────────────────────────────────────
 function updateMascotForContext() {
   const streak = calcStreak();
+  // Update piggy scale from savings
+  updatePiggyScale();
+
   // Unlock accessories for streaks
   if (streak >= 100) {
     M.accessory = 'crown';
@@ -1430,6 +1504,10 @@ function updateMascotForContext() {
     M.skinColor = '#f0e8f0';
     M.coinColor = '#f9c74f';
   }
+
+  // Check if all budgets are under limit this month (budgetMaster)
+  const alerts = getBudgetAlerts();
+  const allUnderBudget = state.budgets.length > 0 && alerts.length === 0;
 
   let eyes, mouth, msg;
   if (streak === 0) {
@@ -1447,6 +1525,9 @@ function updateMascotForContext() {
   } else if (streak >= 3) {
     eyes = 'proud'; mouth = 'smile';
     msg = `<strong>🔥 ${streak} days</strong> no-spend! You're on a roll!`;
+  } else if (allUnderBudget) {
+    eyes = 'thumbsup'; mouth = 'smirk';
+    msg = `All budgets in check! You're doing <strong>great</strong>, Nasha! 👍`;
   } else {
     eyes = 'happy'; mouth = 'smile';
     msg = `<strong>${streak}-day</strong> no-spend streak! Keep it going! 🐰`;
@@ -1523,15 +1604,88 @@ function checkAchievements(type, amount) {
 function showMascotReaction(key) {
   resetInactivity();
   const fxMap = {
-    income:         () => { checkAchievements('income'); spawnParticles('sparkle'); mascotHop(); },
-    expense:        () => {},
-    expenseBig:     () => { spawnParticles('sparkle'); },
-    budgetWarn:     () => {},
-    budgetExceeded: () => { spawnParticles('sparkle'); },
-    transfer:       () => { spawnParticles('sparkle'); mascotBounce(); },
-    goalReached:    () => { spawnParticles('confetti'); mascotDance(); },
+    income:         () => { checkAchievements('income'); spawnParticles('sparkle'); mascotHop(); updatePiggyScale(); },
+    expense:        () => { clearSweatDrop(); },
+    expenseBig:     () => { spawnParticles('sparkle'); setSweatDrop(); },
+    budgetWarn:     () => { setSweatDrop(); },
+    budgetExceeded: () => { spawnParticles('sparkle'); setSweatDrop(); shrinkPiggy(); },
+    transfer:       () => { spawnParticles('sparkle'); mascotBounce(); clearSweatDrop(); },
+    goalReached:    () => { spawnParticles('confetti'); mascotDance(); updatePiggyScale(); },
+    underBudget:    () => { spawnParticles('sparkle'); mascotBounce(); clearSweatDrop(); },
+    budgetMaster:   () => { spawnParticles('confetti'); mascotHop(3); clearSweatDrop(); },
   };
   showReaction(key, fxMap[key] || null);
+}
+
+// ── SWEAT DROP ─────────────────────────────────────────────────────────────
+function setSweatDrop() {
+  M.sweatDrop = true;
+  renderMascot();
+  clearTimeout(M._sweatTimer);
+  M._sweatTimer = setTimeout(() => { M.sweatDrop = false; renderMascot(); }, 5000);
+}
+function clearSweatDrop() {
+  M.sweatDrop = false;
+  clearTimeout(M._sweatTimer);
+}
+
+// ── PIGGY BANK SCALE ───────────────────────────────────────────────────────
+function updatePiggyScale() {
+  const totalIncome = state.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  // Scale: ₱0=0.7, ₱5000=1.0, ₱20000=1.3
+  M.piggyScale = 0.7 + Math.min((totalIncome / 20000) * 0.7, 0.7);
+  renderMascot();
+}
+function shrinkPiggy() {
+  const prev = M.piggyScale;
+  M.piggyScale = Math.max(0.65, M.piggyScale - 0.1);
+  renderMascot();
+  setTimeout(() => { M.piggyScale = prev; renderMascot(); }, 1200);
+}
+
+// ── DRAG COIN → EYE TRACKING ──────────────────────────────────────────────
+function initCoinDrag() {
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (!wrap) return;
+  const parent = wrap.parentElement;
+
+  parent.addEventListener('mousemove', (e) => {
+    if (M.isSleeping || M.isPetting) return;
+    const rect = wrap.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const dx = e.clientX - centerX;
+    // Map dx (-80 to +80px) → eyeOffset (-6 to +6)
+    M.eyeOffset = Math.max(-6, Math.min(6, Math.round(dx / 14)));
+    renderMascot();
+  });
+
+  parent.addEventListener('mouseleave', () => {
+    M.eyeOffset = 0;
+    renderMascot();
+  });
+}
+
+// ── HOVER WAVE ─────────────────────────────────────────────────────────────
+function initHoverWave() {
+  const wrap = document.getElementById('mascot-svg-wrap');
+  if (!wrap) return;
+  let waveTimeout;
+  wrap.addEventListener('mouseenter', () => {
+    if (M.isSleeping || M.isPetting) return;
+    clearTimeout(waveTimeout);
+    const dirs = [0, 5, -5, 5, -5, 0];
+    let i = 0;
+    const wave = setInterval(() => {
+      M.earTilt = dirs[i] || 0;
+      renderMascot();
+      i++;
+      if (i >= dirs.length) {
+        clearInterval(wave);
+        M.earTilt = 0;
+        renderMascot();
+      }
+    }, 90);
+  });
 }
 
 // ── TAP INTERACTION ────────────────────────────────────────────────────────
@@ -1635,6 +1789,8 @@ function initMascot() {
   renderMascot();
   updateMascotForContext();
   startIdleAnimations();
+  initCoinDrag();
+  initHoverWave();
 
   // Cycle tips every 8s
   M.tipTimer = setInterval(() => {
