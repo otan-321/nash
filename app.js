@@ -1,5 +1,5 @@
 // ── STATE ──────────────────────────────────────────────────────────────────
-const STATE_KEY = 'tarsi_state';
+const STATE_KEY = 'nash_state';
 let state = {
   username: 'Otan',
   accounts: [
@@ -21,7 +21,7 @@ const CATEGORIES = {
 const INSIGHTS = [
   "You've moved beyond spare-change energy. <strong>Still modest</strong>, but at least the wallet has some structure now.",
   "Looking <strong>healthy</strong> this week. Keep those expenses in check!",
-  "Your savings rate is <strong>improving</strong>. Tarsi approves 🦔",
+  "Your savings rate is <strong>improving</strong>. Nash approves 🐰",
   "No big splurges detected. You're on a <strong>clean streak</strong>.",
   "Budget discipline: <strong>level up</strong>. Keep logging everything."
 ];
@@ -355,7 +355,7 @@ let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  if (!localStorage.getItem('tarsi_install_dismissed')) {
+  if (!localStorage.getItem('nash_install_dismissed')) {
     document.getElementById('install-banner').classList.add('show');
     // push page content down
     document.getElementById('app').style.paddingTop = '56px';
@@ -369,13 +369,13 @@ document.getElementById('install-btn').addEventListener('click', async () => {
   deferredInstallPrompt.prompt();
   const { outcome } = await deferredInstallPrompt.userChoice;
   deferredInstallPrompt = null;
-  if (outcome === 'accepted') showToast('🎉 Tarsi installed!');
+  if (outcome === 'accepted') showToast('🎉 Nash installed!');
 });
 
 function dismissInstall() {
   document.getElementById('install-banner').classList.remove('show');
   document.getElementById('app').style.paddingTop = '';
-  localStorage.setItem('tarsi_install_dismissed', '1');
+  localStorage.setItem('nash_install_dismissed', '1');
 }
 
 window.addEventListener('appinstalled', () => {

@@ -1,4 +1,4 @@
-const CACHE = 'tarsi-v2';
+const CACHE = 'nash-v1';
 const ASSETS = [
   './',
   './index.html',

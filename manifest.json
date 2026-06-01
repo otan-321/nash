@@ -1,6 +1,6 @@
 {
-  "name": "Tarsi – Finance Tracker",
-  "short_name": "Tarsi",
+  "name": "Nash – Finance Tracker",
+  "short_name": "Nash",
   "description": "Your personal finance tracker. Log income, expenses, and manage your accounts.",
   "start_url": "./",
   "scope": "./",
