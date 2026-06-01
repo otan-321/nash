@@ -1,4 +1,4 @@
-const CACHE = 'nash-v3';
+const CACHE = 'nash-v4';
 const ASSETS = [
   './',
   './index.html',
