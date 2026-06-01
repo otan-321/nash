@@ -1,6 +1,6 @@
-# 🦔 Tarsi – Personal Finance Tracker
+#  Nash – Personal Finance Tracker
 
-A mobile-first Progressive Web App for tracking personal income, expenses, and account balances. Inspired by the tarsier mascot and designed for PHP (Philippine Peso) users.
+A mobile-first Progressive Web App for tracking personal income, expenses, and account balances. Inspired by the rabbit mascot and designed for PHP (Philippine Peso) users.
 
 ---
 
