@@ -1,4 +1,4 @@
-const CACHE = 'tarsi-v1';
+const CACHE = 'tarsi-v2';
 const ASSETS = [
   './',
   './index.html',
