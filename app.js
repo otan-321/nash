@@ -463,11 +463,11 @@ function openEditTx(id) {
   const tx = state.transactions.find(t => t.id === id);
   if (!tx) return;
   state.editingTxId = id;
+  state.selectedCategory = (tx.categoryIcon || '') + ' ' + (tx.category || '');
   setTxType(tx.type);
+  renderCatChips();
   document.getElementById('tx-amount').value = tx.amount;
   document.getElementById('tx-note').value = tx.note || '';
-  state.selectedCategory = (tx.categoryIcon || '') + ' ' + (tx.category || '');
-  renderCatChips();
   const sel = document.getElementById('tx-account');
   const opt = [...sel.options].find(o => o.text.startsWith(tx.account));
   if (opt) sel.value = opt.value;
@@ -481,6 +481,7 @@ function openAddSheet() {
   setTxType('expense');
   document.getElementById('tx-amount').value = '';
   document.getElementById('tx-note').value = '';
+  renderAccountSelect();
   document.getElementById('add-sheet').classList.add('open');
   setTimeout(() => document.getElementById('tx-amount').focus(), 400);
 }
@@ -1265,7 +1266,6 @@ function updateMascotForStreak() {
   }
   setMascotExpression(expr);
   setMascotMessage(msg);
-  document.getElementById('streak-count').textContent = streak;
   document.getElementById('streak-label').textContent = `${streak}-day no-spend streak`;
 }
 
